@@ -1,0 +1,184 @@
+# FORGE Discipline: Post-Incident Review
+# Structured retrospective, not a blame session.
+# Every contributing factor reaches a terminal state.
+# Every action item has an owner.
+
+name: Post-Incident Review
+id: post-incident-review
+version: "1.0.0"
+description: >
+  Blameless post-incident review. Reconstructs the timeline, analyzes detection
+  and response, traces the root cause chain, and designs prevention measures.
+  Every action item gets an owner, deadline, and definition of done.
+
+triage_presets:
+  timeline-only:  [BQ-01]
+  root-cause:     [BQ-01, BQ-04]
+  detection:      [BQ-02, BQ-06]
+  prevention:     [BQ-05, BQ-06]
+  quick:          [BQ-01, BQ-04, BQ-05]
+
+questions:
+  BQ-01:
+    name: Timeline Reconstruction
+    question: What happened, when, and in what order?
+    tqs:
+      TQ-01.1:
+        name: Event Sequence
+        dqs:
+          - "What was the first observable sign of the problem? When exactly?"
+          - "Reconstruct the timeline: list every significant event with timestamp."
+          - "What was the trigger? (deploy, config change, traffic spike, external event)"
+          - "What was the propagation path? (first service affected → second → ...)"
+          - "When was the incident declared? By whom?"
+      TQ-01.2:
+        name: Response Timeline
+        dqs:
+          - "When was the on-call person notified? How? (alert, page, user report)"
+          - "When did the first responder begin investigating?"
+          - "What actions were taken, in order? (restart, rollback, config change, escalation)"
+          - "When was the incident mitigated? (user impact reduced)"
+          - "When was the incident resolved? (root cause fixed)"
+      TQ-01.3:
+        name: Communication Timeline
+        dqs:
+          - "When were stakeholders notified?"
+          - "When was the status page updated?"
+          - "Were there communication gaps? (teams that should have known but didn't)"
+          - "Was there conflicting information communicated during the incident?"
+
+  BQ-02:
+    name: Detection Analysis
+    question: How was the problem found, and why not sooner?
+    tqs:
+      TQ-02.1:
+        name: Detection Method
+        dqs:
+          - "How was the incident detected? (automated alert, user report, internal discovery)"
+          - "If alert — which alert fired? Was it the right one?"
+          - "If user-reported — why didn't monitoring catch it first?"
+          - "Time to detect: how long between incident start and detection?"
+      TQ-02.2:
+        name: Monitoring Gaps
+        dqs:
+          - "What monitoring existed for the affected component?"
+          - "Did existing monitoring fire? If not, why not?"
+          - "Were there signals present that were not monitored?"
+          - "Would a different type of monitoring have caught this faster? (metrics vs logs vs traces)"
+          - "Were there previous near-misses that should have triggered monitoring improvements?"
+      TQ-02.3:
+        name: Alert Quality
+        dqs:
+          - "Were the alerts actionable? (clear what to do next)"
+          - "Were there too many alerts? (noise that delayed response)"
+          - "Did alerts reach the right people?"
+          - "Were alert thresholds appropriate? (too sensitive = noise, too lax = missed)"
+
+  BQ-03:
+    name: Response Analysis
+    question: What was done, what worked, and what made things worse?
+    tqs:
+      TQ-03.1:
+        name: Response Effectiveness
+        dqs:
+          - "For each action taken — did it help, hurt, or have no effect?"
+          - "Were there actions that made the incident worse? (bad rollback, wrong fix, cascading restart)"
+          - "Was the right expertise available? Was escalation needed? Was it timely?"
+          - "Were runbooks available and accurate? Were they followed?"
+          - "Was there a clear incident commander? Was the role effective?"
+      TQ-03.2:
+        name: Response Blockers
+        dqs:
+          - "What slowed down the response? (access issues, missing tooling, unclear ownership)"
+          - "Was there information that would have helped but wasn't available?"
+          - "Were there tooling gaps? (couldn't restart, couldn't see logs, couldn't deploy quickly)"
+          - "Were there communication breakdowns during response?"
+      TQ-03.3:
+        name: What Went Well
+        dqs:
+          - "What aspects of the response worked well? (fast detection, effective mitigation, clear comms)"
+          - "Were there heroic efforts? (these indicate process gaps — the system shouldn't require heroes)"
+          - "What existing processes or tools proved their value?"
+          - "What decisions during the incident should become standard practice?"
+
+  BQ-04:
+    name: Root Cause Chain
+    question: Not just what broke — but why it was possible for it to break.
+    tqs:
+      TQ-04.1:
+        name: Proximate Cause
+        dqs:
+          - "What was the immediate technical cause? (bug, misconfiguration, overload, dependency failure)"
+          - "When was this cause introduced? (commit, deploy, config change, external event)"
+          - "Was this cause preventable with existing tools and processes?"
+          - "Has this exact cause occurred before?"
+      TQ-04.2:
+        name: Contributing Factors
+        dqs:
+          - "What made the proximate cause possible? (missing validation, no test, no monitoring)"
+          - "What made the impact worse than it needed to be? (no circuit breaker, no fallback, cascading)"
+          - "What made detection slow? (no alert, wrong alert, alert fatigue)"
+          - "What made recovery slow? (no runbook, no rollback, unclear ownership)"
+          - "For each contributing factor — is it systemic or one-off?"
+      TQ-04.3:
+        name: Systemic Causes
+        dqs:
+          - "Are there organizational factors? (understaffing, time pressure, competing priorities)"
+          - "Are there process factors? (no code review, no staging, no deployment checks)"
+          - "Are there technical debt factors? (known issues deferred, fragile architecture)"
+          - "Are there knowledge gaps? (documentation, training, onboarding)"
+          - "Is this incident part of a pattern? (similar incidents in the past 6 months)"
+
+  BQ-05:
+    name: Prevention Design
+    question: For each contributing factor — what would prevent recurrence?
+    tqs:
+      TQ-05.1:
+        name: Technical Prevention
+        dqs:
+          - "What code change would prevent the proximate cause?"
+          - "What test would catch this regression in CI?"
+          - "What validation or guard would prevent this class of error?"
+          - "What architectural change would reduce the blast radius?"
+          - "What infrastructure change would improve resilience?"
+      TQ-05.2:
+        name: Process Prevention
+        dqs:
+          - "What review process would have caught this before production?"
+          - "What deployment check would have caught this during rollout?"
+          - "What operational procedure needs to be created or updated?"
+          - "What training or documentation is needed?"
+      TQ-05.3:
+        name: Action Items
+        dqs:
+          - "List every action item. For each: description, owner, deadline, definition of done."
+          - "Which action items are blockers? (must be done before next deploy)"
+          - "Which action items reduce risk but aren't blockers?"
+          - "Who will track action items to completion?"
+          - "When will action items be reviewed for progress?"
+
+  BQ-06:
+    name: Detection Improvement
+    question: What monitoring would catch this faster next time?
+    tqs:
+      TQ-06.1:
+        name: Monitoring Additions
+        dqs:
+          - "What new metrics should be collected?"
+          - "What new alert rules should be created?"
+          - "What new health checks should be added?"
+          - "What new dashboard panels would help during investigation?"
+      TQ-06.2:
+        name: Alert Tuning
+        dqs:
+          - "Do existing alerts need threshold adjustments?"
+          - "Do existing alerts need routing changes? (different team, different severity)"
+          - "Are there alerts that should be suppressed or consolidated?"
+          - "What is the target time-to-detect for this class of incident?"
+      TQ-06.3:
+        name: Runbook Updates
+        dqs:
+          - "Does a new runbook need to be created for this failure mode?"
+          - "Do existing runbooks need to be updated based on what we learned?"
+          - "Is the runbook accessible during an incident? (not behind a VPN that's down)"
+          - "Has the on-call team been briefed on the new/updated runbooks?"

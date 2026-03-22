@@ -1,0 +1,250 @@
+# FORGE Discipline: Architecture Review
+# Pre-build review. Ask every question that would prevent rework
+# BEFORE writing code. Cheaper to fix a design than a deployment.
+
+name: Architecture Review
+id: architecture-review
+version: "1.0.0"
+description: >
+  Pre-build architecture assessment. Systematically evaluates requirements,
+  data flows, failure domains, scaling limits, security boundaries, operational
+  needs, integration contracts, and irreversible decisions before code is written.
+
+triage_presets:
+  requirements:    [BQ-01]
+  data-design:     [BQ-02, BQ-03]
+  risk-review:     [BQ-03, BQ-04, BQ-05, BQ-08]
+  ops-readiness:   [BQ-06, BQ-07]
+  quick:           [BQ-01, BQ-03, BQ-08]
+
+questions:
+  BQ-01:
+    name: Problem Definition
+    question: What problem are we solving, and what are the boundaries?
+    tqs:
+      TQ-01.1:
+        name: Requirements
+        dqs:
+          - "What is the one-sentence problem statement?"
+          - "Who are the users? What are their primary use cases?"
+          - "What are the functional requirements? List each one."
+          - "What are the non-functional requirements? (performance, availability, security, compliance)"
+          - "What is explicitly OUT of scope? What should this system NOT do?"
+          - "What are the hard constraints? (budget, timeline, team size, existing infrastructure)"
+      TQ-01.2:
+        name: Success Criteria
+        dqs:
+          - "How will you measure success? What metrics matter?"
+          - "What is the minimum viable version? What can be deferred to v2?"
+          - "What is the expected timeline? Are there hard deadlines?"
+          - "Who are the stakeholders? Who approves the architecture?"
+      TQ-01.3:
+        name: Existing Context
+        dqs:
+          - "What existing systems does this interact with or replace?"
+          - "What existing data must be migrated or integrated?"
+          - "Are there organizational standards or patterns that must be followed?"
+          - "What has been tried before? Why did it succeed or fail?"
+
+  BQ-02:
+    name: Data Flows
+    question: Every input, transform, and output — mapped completely.
+    tqs:
+      TQ-02.1:
+        name: Data Sources
+        dqs:
+          - "What are ALL data sources? (user input, APIs, files, events, databases, streams)"
+          - "For each source — what is the data format, schema, and volume?"
+          - "For each source — what is the reliability? (always available, occasionally, best-effort)"
+          - "For each source — who owns it? Can the schema change without notice?"
+          - "For each source — is there a backfill strategy if historical data is needed?"
+      TQ-02.2:
+        name: Data Transformations
+        dqs:
+          - "What transformations happen between input and output?"
+          - "Are any transformations lossy? (truncation, aggregation, sampling)"
+          - "What is the processing model? (batch, stream, request/response, event-driven)"
+          - "Where does business logic live? Is it centralized or distributed?"
+          - "Are transformations idempotent? What happens on reprocessing?"
+      TQ-02.3:
+        name: Data Storage
+        dqs:
+          - "What data must be persisted? For how long?"
+          - "What is the data model? (relational, document, graph, key-value, time series)"
+          - "What are the access patterns? (read-heavy, write-heavy, mixed, append-only)"
+          - "What consistency model is needed? (strong, eventual, causal)"
+          - "What is the expected data volume at launch? In 1 year? In 5 years?"
+      TQ-02.4:
+        name: Data Outputs
+        dqs:
+          - "What are ALL output destinations? (APIs, UIs, reports, notifications, exports)"
+          - "For each output — what latency is acceptable? (real-time, near-real-time, batch)"
+          - "Are there data residency or sovereignty requirements?"
+          - "Is there a data deletion/purge requirement? (GDPR right to be forgotten)"
+
+  BQ-03:
+    name: Failure Domains
+    question: What breaks independently, and what cascades?
+    tqs:
+      TQ-03.1:
+        name: Component Isolation
+        dqs:
+          - "Draw the component diagram. What talks to what?"
+          - "For each component — can it fail without taking down the whole system?"
+          - "Where are the single points of failure?"
+          - "What are the blast radius boundaries? (if X dies, what else dies)"
+          - "Are failure domains aligned with team boundaries?"
+      TQ-03.2:
+        name: Cascade Analysis
+        dqs:
+          - "If the database goes down — what happens to each component?"
+          - "If the message queue goes down — what happens?"
+          - "If an external API goes down — what happens?"
+          - "If the auth service goes down — what happens?"
+          - "What is the maximum cascade depth? (A calls B calls C calls D...)"
+      TQ-03.3:
+        name: Recovery Design
+        dqs:
+          - "For each failure domain — what is the recovery strategy? (retry, fallback, degrade, fail)"
+          - "What is the target availability? (99.9%, 99.99%)"
+          - "What is the recovery time objective (RTO)?"
+          - "What is the recovery point objective (RPO)?"
+          - "Is there a circuit breaker pattern for each external dependency?"
+
+  BQ-04:
+    name: Scaling Limits
+    question: What bottlenecks first, and can you unblock it?
+    tqs:
+      TQ-04.1:
+        name: Scaling Model
+        dqs:
+          - "Can each component scale horizontally? (add more instances)"
+          - "What shared state prevents horizontal scaling? (sessions, locks, local storage)"
+          - "What is the scaling unit? (per user, per request, per tenant, per data volume)"
+          - "Is there a multi-tenancy model? How are tenants isolated?"
+      TQ-04.2:
+        name: Bottleneck Analysis
+        dqs:
+          - "What is the expected load at launch? In 6 months? In 2 years?"
+          - "Under 10x load — what component fails first? Why?"
+          - "Is the database the bottleneck? Can it be sharded, replicated, or cached?"
+          - "Is the network the bottleneck? (chatty services, large payloads, geographic distance)"
+          - "Is there a caching strategy? What is cached, where, and how is it invalidated?"
+      TQ-04.3:
+        name: Cost Model
+        dqs:
+          - "How does cost scale with usage? (linear, sublinear, superlinear)"
+          - "What is the most expensive component? Can it be optimized or replaced?"
+          - "Are there cost cliffs? (e.g., exceeding a tier, hitting a rate limit surcharge)"
+          - "Is there a cost cap or budget constraint?"
+
+  BQ-05:
+    name: Security Boundaries
+    question: Where are the trust zones, and how are they enforced?
+    tqs:
+      TQ-05.1:
+        name: Trust Zones
+        dqs:
+          - "What are the trust boundaries? (public internet, DMZ, internal, database, admin)"
+          - "For each boundary — what authentication is required to cross it?"
+          - "For each boundary — what authorization model controls access within it?"
+          - "Are there service-to-service trust relationships? How are they established?"
+          - "Is there a zero-trust model or a perimeter-based model?"
+      TQ-05.2:
+        name: Attack Surface
+        dqs:
+          - "What is exposed to the public internet? (APIs, UIs, webhooks)"
+          - "What sensitive data flows through the system? Where is it at rest?"
+          - "What are the most valuable targets for an attacker?"
+          - "What is the blast radius of a compromised component?"
+          - "Are there admin/debug interfaces? How are they protected?"
+      TQ-05.3:
+        name: Security Requirements
+        dqs:
+          - "What compliance requirements apply? (SOC2, HIPAA, GDPR, PCI-DSS)"
+          - "Is encryption required at rest? In transit? What standards?"
+          - "Is there an audit trail requirement? What must be logged?"
+          - "Are there data residency requirements? (data must stay in country/region)"
+          - "Is penetration testing planned? When?"
+
+  BQ-06:
+    name: Operational Requirements
+    question: How will you deploy, monitor, debug, and maintain this?
+    tqs:
+      TQ-06.1:
+        name: Deployment
+        dqs:
+          - "What is the deployment target? (cloud, on-prem, hybrid, edge)"
+          - "What is the deployment model? (containers, VMs, serverless, bare metal)"
+          - "Can you deploy without downtime? (blue-green, rolling, canary)"
+          - "How long does a deployment take? How quickly can you rollback?"
+          - "Is there a staging environment that matches production?"
+      TQ-06.2:
+        name: Observability
+        dqs:
+          - "What metrics will you collect? (RED: rate, errors, duration)"
+          - "What will you log? What is the logging standard?"
+          - "Can you trace a request across all services?"
+          - "What alerts will you set up? What constitutes an actionable alert?"
+          - "How will you know the system is healthy? What is the health check strategy?"
+      TQ-06.3:
+        name: Maintenance
+        dqs:
+          - "How will you handle schema migrations? (online DDL, dual-write, expand-contract)"
+          - "How will you handle dependency updates? (automatic, scheduled, manual)"
+          - "What is the backup strategy? How is restore tested?"
+          - "How will you handle secret rotation?"
+          - "What is the plan for OS/runtime patching?"
+
+  BQ-07:
+    name: Integration Contracts
+    question: What are the APIs, schemas, and protocols — and who owns them?
+    tqs:
+      TQ-07.1:
+        name: API Design
+        dqs:
+          - "What API style? (REST, GraphQL, gRPC, WebSocket, message-based)"
+          - "What is the versioning strategy? (URL path, header, content negotiation)"
+          - "What is the authentication mechanism for each API? (OAuth, API key, mTLS)"
+          - "What is the error format? Is it consistent across all APIs?"
+          - "Is there an API specification? (OpenAPI, protobuf, AsyncAPI)"
+      TQ-07.2:
+        name: Schema Contracts
+        dqs:
+          - "Are schemas defined and shared between producer and consumer?"
+          - "What is the schema evolution strategy? (backward compat, versioning, deprecation)"
+          - "Are there breaking changes planned? How will consumers be migrated?"
+          - "Is there schema validation at the boundary? (reject unexpected fields, types)"
+      TQ-07.3:
+        name: Integration Patterns
+        dqs:
+          - "What integration patterns are used? (sync request/response, async events, shared database)"
+          - "For each async integration — what is the delivery guarantee? (at-least-once, exactly-once)"
+          - "For each integration — what is the SLA? (latency, availability, throughput)"
+          - "Who owns each integration point? What is the escalation path for breaking changes?"
+
+  BQ-08:
+    name: Irreversible Decisions
+    question: What choices are expensive to change later?
+    tqs:
+      TQ-08.1:
+        name: Technology Choices
+        dqs:
+          - "What is the primary language/framework? Why? What is the exit cost?"
+          - "What is the primary datastore? Why? Can it be replaced later?"
+          - "What cloud provider or infrastructure is this locked to?"
+          - "Are there open-source vs. proprietary decisions? What are the lock-in risks?"
+      TQ-08.2:
+        name: Data Model Decisions
+        dqs:
+          - "What is the primary key strategy? (auto-increment, UUID, composite, natural)"
+          - "What is the multi-tenancy model? (shared schema, schema-per-tenant, DB-per-tenant)"
+          - "What is the data partitioning strategy? Can it change later?"
+          - "Are there denormalization decisions that will be hard to reverse?"
+      TQ-08.3:
+        name: API Surface Decisions
+        dqs:
+          - "What public API commitments are being made? (once published, hard to remove)"
+          - "What naming conventions are being established? (once adopted, painful to rename)"
+          - "What authentication model is being committed to?"
+          - "Are there decisions being made for convenience now that will cause pain at scale?"

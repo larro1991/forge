@@ -1,0 +1,228 @@
+# FORGE Discipline: Test Specification Generation
+# Instead of "write tests," ask questions that PRODUCE test cases.
+# Each DQ answer IS a test case specification.
+
+name: Test Specification
+id: test-specification
+version: "1.0.0"
+description: >
+  Generates comprehensive test specifications by systematically questioning
+  every input, output, state transition, edge case, failure mode, and security
+  scenario. Each answered DQ becomes a test case spec.
+
+triage_presets:
+  functional:   [BQ-01, BQ-02, BQ-03]
+  edge-cases:   [BQ-04, BQ-05]
+  security:     [BQ-06]
+  integration:  [BQ-07]
+  performance:  [BQ-08]
+  quick:        [BQ-01, BQ-04, BQ-06]
+
+questions:
+  BQ-01:
+    name: Inputs
+    question: What goes in, and what are all the ways it could go in wrong?
+    tqs:
+      TQ-01.1:
+        name: Input Inventory
+        dqs:
+          - "List every input the system accepts. (API params, form fields, file uploads, env vars, config)"
+          - "For each input — what is the valid type? (string, int, float, bool, file, JSON, etc.)"
+          - "For each input — what is the valid range? (min, max, allowed values, regex pattern)"
+          - "For each input — is it required or optional? What is the default?"
+          - "For each input — can it come from multiple sources? (query param AND body, header AND cookie)"
+      TQ-01.2:
+        name: Boundary Values
+        dqs:
+          - "For each numeric input — test: min, min-1, min+1, max, max-1, max+1, 0, negative, MAX_INT."
+          - "For each string input — test: empty, 1 char, max length, max+1, unicode, emoji, null bytes."
+          - "For each array/list input — test: empty, 1 element, max elements, max+1, nested."
+          - "For each date/time input — test: epoch, far future, far past, DST boundary, timezone edge."
+          - "For each file input — test: empty file, max size, max+1, wrong type, corrupt, path traversal name."
+      TQ-01.3:
+        name: Invalid Inputs
+        dqs:
+          - "For each input — what happens with null/undefined/missing?"
+          - "For each input — what happens with wrong type? (string where int expected, etc.)"
+          - "For each input — what happens with malicious content? (SQL injection, XSS, command injection)"
+          - "For each input — what happens with extremely large values? (1MB string, 10M array elements)"
+          - "What happens if the same request is sent twice? (idempotency)"
+
+  BQ-02:
+    name: Outputs
+    question: What comes out, and how do you know it's correct?
+    tqs:
+      TQ-02.1:
+        name: Expected Outputs
+        dqs:
+          - "For each input combination — what is the exact expected output? (status code, body, headers)"
+          - "For each output — what is the schema? (JSON shape, field types, required vs optional)"
+          - "Are there different output formats for the same data? (JSON, XML, CSV, binary)"
+          - "Are there pagination/streaming outputs? What are the boundaries?"
+          - "What metadata is included? (timestamps, request IDs, version numbers)"
+      TQ-02.2:
+        name: Error Outputs
+        dqs:
+          - "For each error condition — what is the exact error response? (status code, error code, message)"
+          - "Are error messages consistent across endpoints?"
+          - "Do error responses include enough info to debug without leaking internals?"
+          - "Are there error codes that clients should handle specially? (retry, redirect, auth refresh)"
+          - "What happens when multiple validation errors occur? (first-fail vs. collect-all)"
+
+  BQ-03:
+    name: State Transitions
+    question: What states does the system move through, and what are the rules?
+    tqs:
+      TQ-03.1:
+        name: State Machines
+        dqs:
+          - "What entities have state? (orders, users, jobs, connections, sessions)"
+          - "For each entity — what are all possible states?"
+          - "For each state — what transitions are allowed? What triggers each?"
+          - "For each state — what transitions are NOT allowed? Test that they're blocked."
+          - "Are there terminal states? Can entities be resurrected from terminal states?"
+      TQ-03.2:
+        name: Preconditions & Postconditions
+        dqs:
+          - "For each operation — what must be true before it can execute? (auth, data exists, state valid)"
+          - "For each operation — what must be true after it executes? (data changed, events emitted, state updated)"
+          - "What invariants must always hold? (balances match, counts consistent, no orphaned records)"
+          - "Are there operations that must happen in a specific order? Test out-of-order."
+          - "Are there operations that must be atomic? Test interruption midway."
+
+  BQ-04:
+    name: Edge Cases
+    question: What are the weird, unlikely, but possible scenarios?
+    tqs:
+      TQ-04.1:
+        name: Concurrency
+        dqs:
+          - "What happens if two users modify the same resource simultaneously?"
+          - "What happens if the same user sends duplicate requests rapidly?"
+          - "Are there race conditions in read-modify-write sequences?"
+          - "What happens under connection pool exhaustion?"
+          - "What happens if a long-running operation overlaps with a short one on the same data?"
+      TQ-04.2:
+        name: Timing & Order
+        dqs:
+          - "What happens if events arrive out of order?"
+          - "What happens if a callback/webhook arrives before the initiating request completes?"
+          - "What happens at clock boundaries? (midnight, DST, leap second, year rollover)"
+          - "What happens if an operation times out but actually succeeds on the backend?"
+          - "What happens if a retry succeeds after the original was assumed failed?"
+      TQ-04.3:
+        name: Empty & Null States
+        dqs:
+          - "What does the system do with zero data? (empty database, no users, no config)"
+          - "What does a fresh install look like? First-run behavior?"
+          - "What happens after all data is deleted?"
+          - "What happens with an entity that has all optional fields empty?"
+
+  BQ-05:
+    name: Failure Modes
+    question: What breaks, and does it break safely?
+    tqs:
+      TQ-05.1:
+        name: Infrastructure Failures
+        dqs:
+          - "What happens if the database goes down mid-request?"
+          - "What happens if the network is slow (high latency) vs. down (no response)?"
+          - "What happens if disk is full during a write?"
+          - "What happens if memory is exhausted?"
+          - "What happens if an external API returns 500? 429? Timeout? Garbage?"
+      TQ-05.2:
+        name: Data Failures
+        dqs:
+          - "What happens if the database has corrupt/inconsistent data?"
+          - "What happens if a required config value is missing?"
+          - "What happens if a file expected on disk doesn't exist?"
+          - "What happens if a cache returns stale data?"
+          - "What happens if a message queue delivers a duplicate message?"
+      TQ-05.3:
+        name: Recovery
+        dqs:
+          - "After a crash — does the system recover to consistent state on restart?"
+          - "After a failed write — is the data left in a valid state?"
+          - "After a timeout — are resources (connections, locks, temp files) cleaned up?"
+          - "After a partial batch — how many items succeeded? Can the batch be resumed?"
+
+  BQ-06:
+    name: Security Scenarios
+    question: What should be impossible, and can you prove it?
+    tqs:
+      TQ-06.1:
+        name: Authentication Bypass
+        dqs:
+          - "Can any endpoint be accessed without authentication? Test every route."
+          - "Can an expired token be used? Can a revoked token be used?"
+          - "Can authentication be bypassed via parameter manipulation? (role in JWT, user_id in query)"
+          - "What happens with a malformed auth header? (missing Bearer, wrong format, extra spaces)"
+      TQ-06.2:
+        name: Authorization Bypass
+        dqs:
+          - "Can a regular user access admin endpoints?"
+          - "Can a user access another user's data by changing IDs? (IDOR)"
+          - "Can a user perform actions beyond their role by manipulating request params?"
+          - "Are bulk/batch endpoints checked per-item or only at the batch level?"
+      TQ-06.3:
+        name: Injection & Manipulation
+        dqs:
+          - "For each input that reaches a SQL query — test injection payloads."
+          - "For each input that reaches shell execution — test command injection payloads."
+          - "For each input rendered in HTML — test XSS payloads."
+          - "For each input used in file paths — test path traversal payloads."
+          - "For each input used in redirects — test open redirect payloads."
+
+  BQ-07:
+    name: Integration Boundaries
+    question: Where systems meet — what can go wrong at the seams?
+    tqs:
+      TQ-07.1:
+        name: API Contracts
+        dqs:
+          - "For each API consumed — does the client handle all documented response codes?"
+          - "For each API consumed — does the client handle undocumented responses? (503, HTML error page)"
+          - "For each API consumed — what happens if the response schema changes? (new fields, removed fields)"
+          - "For each API consumed — what happens if the response is empty? Null? Truncated?"
+      TQ-07.2:
+        name: Data Flow Between Services
+        dqs:
+          - "For each service boundary — are data types consistent? (int vs string IDs, date formats)"
+          - "For each message queue — what happens on publish failure? On consume failure?"
+          - "For each webhook — what happens on delivery failure? Retry? Dead letter?"
+          - "For each shared database — are there conflicting writes from multiple services?"
+      TQ-07.3:
+        name: Third-Party Integration
+        dqs:
+          - "For each third-party service — test with the service unavailable."
+          - "For each third-party service — test with rate limiting active."
+          - "For each third-party service — test with sandbox/test credentials vs production."
+          - "For each third-party service — are webhook signatures validated?"
+
+  BQ-08:
+    name: Performance Envelope
+    question: Where are the limits, and what happens when you hit them?
+    tqs:
+      TQ-08.1:
+        name: Load Characteristics
+        dqs:
+          - "What is the expected concurrent user count? Test at 1x, 2x, 5x, 10x."
+          - "What is the expected request rate? Test sustained load at expected + 2x."
+          - "What is the maximum acceptable response time? (p50, p95, p99 targets)"
+          - "Under load — does memory grow unbounded or stabilize?"
+          - "Under load — do connections pool correctly or leak?"
+      TQ-08.2:
+        name: Data Volume
+        dqs:
+          - "What happens when the database has 10x the current data volume?"
+          - "What happens when a single response would be very large? (1000 items in a list)"
+          - "Are there queries that degrade with data size? (missing indexes, full table scans)"
+          - "What happens when log/event volume spikes? (disk fill, I/O contention)"
+      TQ-08.3:
+        name: Resource Limits
+        dqs:
+          - "What happens when connection pool is exhausted?"
+          - "What happens when file descriptor limit is reached?"
+          - "What happens when the system approaches memory limit?"
+          - "What happens when CPU is saturated? Does the system degrade gracefully?"
+          - "Are there timeouts on every external call? Are they tested?"

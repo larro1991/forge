@@ -1,0 +1,218 @@
+# FORGE Discipline: Migration Planning
+# Moving from system A to system B without losing data, users, or sanity.
+# Every gap in the plan becomes a production incident during cutover.
+
+name: Migration Planning
+id: migration-planning
+version: "1.0.0"
+description: >
+  Systematic migration assessment. Maps source to target, identifies every
+  data transformation, plans cutover strategy, documents rollback paths,
+  and verifies completeness. Prevents the "we forgot about X" class of failures.
+
+triage_presets:
+  discovery:     [BQ-01, BQ-02]
+  data-focus:    [BQ-03]
+  cutover-plan:  [BQ-04, BQ-06]
+  risk-review:   [BQ-05, BQ-06]
+  quick:         [BQ-01, BQ-03, BQ-05]
+
+questions:
+  BQ-01:
+    name: Source System Inventory
+    question: What does the current system do — completely?
+    tqs:
+      TQ-01.1:
+        name: Functional Inventory
+        dqs:
+          - "List every function/feature the source system provides."
+          - "For each function — who uses it? How often? How critical is it?"
+          - "Are there functions that exist but nobody uses? (candidates for deprecation)"
+          - "Are there undocumented functions? (scripts, cron jobs, manual processes)"
+          - "What integrations does the source system have? (APIs consumed, APIs provided, webhooks)"
+      TQ-01.2:
+        name: Data Inventory
+        dqs:
+          - "What data stores does the source system use? (databases, files, caches, queues)"
+          - "For each store — what is the schema? How much data?"
+          - "For each store — what is the data quality? (nulls, duplicates, inconsistencies)"
+          - "Is there data in the source that isn't in any database? (logs, config, local files)"
+          - "What is the data growth rate? How much will accumulate during migration?"
+      TQ-01.3:
+        name: Operational Inventory
+        dqs:
+          - "What scheduled jobs/cron tasks run on the source system?"
+          - "What manual operational procedures exist? (backups, deployments, user management)"
+          - "What monitoring and alerting exists? What dashboards?"
+          - "What access controls and permissions exist?"
+          - "What compliance or audit requirements does the source system meet?"
+
+  BQ-02:
+    name: Target Requirements
+    question: What must the target system do — and what's new?
+    tqs:
+      TQ-02.1:
+        name: Feature Parity
+        dqs:
+          - "For each source function — does the target need it? (required, nice-to-have, deprecated)"
+          - "For each required function — does the target already support it?"
+          - "What functions need to be built from scratch?"
+          - "What functions can be replaced by equivalent functionality in the target?"
+          - "Are there functions where the target does it differently? (user retraining needed)"
+      TQ-02.2:
+        name: New Requirements
+        dqs:
+          - "What new functions does the target need that the source doesn't have?"
+          - "What performance improvements are expected?"
+          - "What operational improvements are expected? (deployment, monitoring, scaling)"
+          - "Are there compliance requirements the target must meet that the source doesn't?"
+      TQ-02.3:
+        name: Gap Analysis
+        dqs:
+          - "List every gap between source functionality and target capability."
+          - "For each gap — what is the plan? (build, buy, accept, defer)"
+          - "For each gap — what is the risk if it's not addressed before cutover?"
+          - "Are there gaps that are blockers vs. gaps that can be fixed post-migration?"
+
+  BQ-03:
+    name: Data Migration
+    question: What data moves, how does it transform, and how do you verify it?
+    tqs:
+      TQ-03.1:
+        name: Schema Mapping
+        dqs:
+          - "For each source table/collection — what is the target equivalent?"
+          - "For each field — what is the mapping? (direct copy, transform, derive, drop)"
+          - "Are there fields in the source with no target equivalent? What happens to them?"
+          - "Are there required target fields with no source equivalent? What is the default?"
+          - "Are there data type changes? (string→int, datetime format, encoding)"
+      TQ-03.2:
+        name: Data Transformation
+        dqs:
+          - "What transformations are needed? (normalization, denormalization, merging, splitting)"
+          - "Are there referential integrity constraints that must be maintained during migration?"
+          - "How are IDs/keys mapped between source and target? (same IDs, new IDs, mapping table)"
+          - "Are there any lossy transformations? (precision loss, truncation, encoding changes)"
+          - "How is data validated after transformation? (row counts, checksums, spot checks)"
+      TQ-03.3:
+        name: Migration Mechanics
+        dqs:
+          - "What is the migration tool/approach? (ETL, dump/restore, streaming, dual-write)"
+          - "How long will the data migration take? Has it been tested at full data volume?"
+          - "Can the migration run incrementally or must it be all-at-once?"
+          - "How is data that changes during migration handled? (CDC, freeze period, reconciliation)"
+          - "Is there a data validation step after migration? What does it check?"
+      TQ-03.4:
+        name: Data Reconciliation
+        dqs:
+          - "How do you prove that all data migrated correctly? (count, checksum, sample compare)"
+          - "What is the acceptable data loss threshold? (zero? per-table thresholds?)"
+          - "How do you handle records that fail migration? (retry, skip, quarantine)"
+          - "Is there a reconciliation report? Who reviews it?"
+
+  BQ-04:
+    name: Cutover Strategy
+    question: How do you switch from old to new without dropping the ball?
+    tqs:
+      TQ-04.1:
+        name: Cutover Model
+        dqs:
+          - "What is the cutover approach? (big bang, parallel run, strangler fig, feature flags)"
+          - "If parallel run — how long do both systems run? How are conflicts resolved?"
+          - "If strangler fig — what is the routing strategy? (by feature, by user, by percentage)"
+          - "What is the cutover window? (scheduled maintenance, off-peak, rolling)"
+          - "Who makes the go/no-go decision? What are the criteria?"
+      TQ-04.2:
+        name: Cutover Steps
+        dqs:
+          - "List every step in the cutover procedure, in order."
+          - "For each step — how long does it take? What could go wrong?"
+          - "For each step — what is the verification that it succeeded?"
+          - "Are there steps that require downtime? How long?"
+          - "Has the cutover been rehearsed? In a production-like environment?"
+      TQ-04.3:
+        name: Communication
+        dqs:
+          - "Who needs to be notified before cutover? (users, stakeholders, on-call, partners)"
+          - "What is the communication plan? (email, status page, in-app notice)"
+          - "What is the support plan during cutover? (extra staff, war room, escalation)"
+          - "How will you handle user issues during the transition period?"
+
+  BQ-05:
+    name: What Breaks During Transition
+    question: What dependencies, integrations, and downstream systems will be affected?
+    tqs:
+      TQ-05.1:
+        name: Integration Impact
+        dqs:
+          - "List every system that integrates with the source. For each — what changes?"
+          - "Are there API consumers that need to update their integration?"
+          - "Are there webhooks or callbacks that point to the source? Who updates them?"
+          - "Are there shared databases or files that other systems depend on?"
+          - "Are there scheduled jobs in other systems that depend on the source?"
+      TQ-05.2:
+        name: User Impact
+        dqs:
+          - "What changes for end users? (URLs, login, workflow, UI, data location)"
+          - "Is user retraining needed? What is the plan?"
+          - "Are there bookmarks, saved links, or external references that will break?"
+          - "Are there mobile apps or thick clients that need updating?"
+      TQ-05.3:
+        name: Operational Impact
+        dqs:
+          - "What monitoring/alerting needs to change?"
+          - "What runbooks need to be updated or created?"
+          - "What access controls and permissions need to be reconfigured?"
+          - "Are there compliance/audit processes that need to be updated?"
+
+  BQ-06:
+    name: Rollback Plan
+    question: If it goes wrong — how do you go back, and how far back can you go?
+    tqs:
+      TQ-06.1:
+        name: Rollback Strategy
+        dqs:
+          - "At each stage of cutover — can you roll back? How?"
+          - "What is the point of no return? After what step can you NOT roll back?"
+          - "How long does rollback take at each stage?"
+          - "What data would be lost on rollback? (data written to new system during migration)"
+      TQ-06.2:
+        name: Rollback Testing
+        dqs:
+          - "Has rollback been tested? In a production-like environment?"
+          - "What are the rollback triggers? (what conditions mean 'abort')"
+          - "Who has authority to trigger rollback?"
+          - "Is there a time limit for deciding to rollback? (after X hours, rollback is no longer viable)"
+      TQ-06.3:
+        name: Forward-Fix Alternative
+        dqs:
+          - "For issues that don't warrant full rollback — is there a forward-fix strategy?"
+          - "Can individual features be toggled back to the old system? (feature flags)"
+          - "Is there a hybrid mode where some traffic goes to old, some to new?"
+
+  BQ-07:
+    name: Completeness Verification
+    question: How do you prove the migration is done and nothing was missed?
+    tqs:
+      TQ-07.1:
+        name: Functional Verification
+        dqs:
+          - "For each function in the feature parity list — has it been tested on the target?"
+          - "For each integration — has it been tested end-to-end on the target?"
+          - "Has the target been tested under production-like load?"
+          - "Has the target been tested with production-like data volume?"
+      TQ-07.2:
+        name: Data Verification
+        dqs:
+          - "Have row counts been compared between source and target?"
+          - "Have checksums been compared for critical data?"
+          - "Have sample records been spot-checked for accuracy?"
+          - "Is there data in the source that didn't make it to the target? Why?"
+      TQ-07.3:
+        name: Operational Verification
+        dqs:
+          - "Is monitoring active on the target? Are dashboards working?"
+          - "Are alerts firing correctly? (test with a synthetic failure)"
+          - "Are backups running on the target? Has restore been tested?"
+          - "Is the on-call team trained on the target system?"
+          - "Has the source system been decommissioned? If not, what is the decommission plan?"

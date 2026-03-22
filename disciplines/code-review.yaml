@@ -1,0 +1,174 @@
+# FORGE Discipline: Code Review
+# PR-level review — lighter than a full security audit.
+# Focused on: does this change do what it claims, safely, without breaking things?
+
+name: Code Review
+id: code-review
+version: "1.0.0"
+description: >
+  Structured code review for pull requests and changesets. Evaluates correctness,
+  security impact, performance impact, test coverage, backward compatibility,
+  and documentation. Lighter than a full security audit — focused on the delta.
+
+triage_presets:
+  security-focused: [BQ-02, BQ-05]
+  quick:            [BQ-01, BQ-02, BQ-04]
+  thorough:         [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06]
+
+questions:
+  BQ-01:
+    name: Correctness
+    question: Does this change do what it claims to do?
+    tqs:
+      TQ-01.1:
+        name: Intent
+        dqs:
+          - "What is the stated purpose of this change? (ticket, PR description, commit message)"
+          - "Does every modified file contribute to the stated purpose? (no scope creep)"
+          - "Are there changes that are unrelated to the stated purpose? Why are they included?"
+      TQ-01.2:
+        name: Logic
+        dqs:
+          - "For each modified function — does the logic match the intent?"
+          - "Are there off-by-one errors, wrong comparisons, or inverted conditions?"
+          - "Are there code paths that are unreachable or always true/false?"
+          - "Are error cases handled? What happens on the unhappy path?"
+          - "Are there assumptions about input that aren't validated?"
+      TQ-01.3:
+        name: Edge Cases
+        dqs:
+          - "What happens with empty input? Null? Zero? Max value?"
+          - "What happens with concurrent access to the modified code?"
+          - "What happens if this code is called twice? (idempotency)"
+          - "Are there timing dependencies? (TOCTOU, race conditions)"
+
+  BQ-02:
+    name: Security Impact
+    question: Does this change introduce, fix, or modify security-relevant behavior?
+    tqs:
+      TQ-02.1:
+        name: Attack Surface
+        dqs:
+          - "Does this change add new input handling? Is it validated?"
+          - "Does this change add new API endpoints? Are they authenticated and authorized?"
+          - "Does this change modify authentication or authorization logic?"
+          - "Does this change handle secrets, credentials, or sensitive data?"
+      TQ-02.2:
+        name: Injection & Encoding
+        dqs:
+          - "Does this change construct SQL queries? Are they parameterized?"
+          - "Does this change execute shell commands? Is input escaped?"
+          - "Does this change render user input in HTML? Is it escaped?"
+          - "Does this change handle file paths from user input? Is traversal prevented?"
+          - "Does this change handle redirects? Are they validated?"
+      TQ-02.3:
+        name: Data Exposure
+        dqs:
+          - "Does this change log anything that could contain sensitive data?"
+          - "Does this change add sensitive data to error messages?"
+          - "Does this change send data to new external services?"
+          - "Does this change modify access controls? Could it widen access?"
+
+  BQ-03:
+    name: Performance Impact
+    question: Will this change make things slower, use more resources, or hit limits?
+    tqs:
+      TQ-03.1:
+        name: Complexity
+        dqs:
+          - "Does this change add loops or recursion? What is the worst-case complexity?"
+          - "Does this change add database queries? Are they in a loop? (N+1)"
+          - "Does this change add network calls? Can they be batched?"
+          - "Does this change increase memory usage? (large allocations, unbounded collections)"
+      TQ-03.2:
+        name: Resource Usage
+        dqs:
+          - "Does this change open connections, file handles, or other resources? Are they closed?"
+          - "Does this change add to a hot path? (called on every request)"
+          - "Does this change affect caching? (invalidation, new cache, removed cache)"
+          - "Under 10x current load — would this change be the bottleneck?"
+      TQ-03.3:
+        name: Database Impact
+        dqs:
+          - "Does this change add or modify database queries? Explain the query plan."
+          - "Does this change add indexes? What is the write-time cost?"
+          - "Does this change add migrations? Can they run online without locking?"
+          - "Does this change affect table size significantly? (new columns, denormalization)"
+
+  BQ-04:
+    name: Test Coverage
+    question: Is this change tested, and are the tests meaningful?
+    tqs:
+      TQ-04.1:
+        name: Test Presence
+        dqs:
+          - "Are there tests for the new/modified code? What do they cover?"
+          - "Are there tests for the happy path?"
+          - "Are there tests for error cases and edge cases?"
+          - "Are there tests for security scenarios? (auth bypass, injection, invalid input)"
+      TQ-04.2:
+        name: Test Quality
+        dqs:
+          - "Do the tests verify behavior or implementation details?"
+          - "Could the tests pass with a broken implementation? (too loose assertions)"
+          - "Could the tests fail with a correct implementation? (brittle, timing-dependent)"
+          - "Are the tests readable? Can you understand what they verify without reading the code?"
+      TQ-04.3:
+        name: Missing Tests
+        dqs:
+          - "What code paths are NOT tested? Why?"
+          - "What edge cases are NOT tested? Should they be?"
+          - "Is there a regression test for the specific bug being fixed? (if this is a bugfix)"
+          - "Would this change benefit from an integration test? A load test?"
+
+  BQ-05:
+    name: Backward Compatibility
+    question: Will this change break anything that depends on the current behavior?
+    tqs:
+      TQ-05.1:
+        name: API Compatibility
+        dqs:
+          - "Does this change modify a public API? (endpoint, response schema, error codes)"
+          - "Are the API changes backward compatible? (additive only, no removals)"
+          - "Are there consumers of this API that need to be updated?"
+          - "Is the API versioned? Should this be a new version?"
+      TQ-05.2:
+        name: Data Compatibility
+        dqs:
+          - "Does this change modify database schema? Is it backward compatible?"
+          - "Can old code read data written by new code? (rollback safety)"
+          - "Can new code read data written by old code? (migration safety)"
+          - "Does this change modify serialization formats? (JSON keys, protobuf fields)"
+      TQ-05.3:
+        name: Behavioral Compatibility
+        dqs:
+          - "Does this change modify the behavior of existing functionality?"
+          - "Could any downstream system or script depend on the old behavior?"
+          - "Does this change modify default values, timeouts, or limits?"
+          - "Is there a feature flag to gradually roll this out?"
+
+  BQ-06:
+    name: Documentation & Clarity
+    question: Can the next person understand this change?
+    tqs:
+      TQ-06.1:
+        name: Code Clarity
+        dqs:
+          - "Are variable/function names clear and descriptive?"
+          - "Is the code self-documenting, or does it need comments?"
+          - "Are complex algorithms or business rules explained?"
+          - "Is there dead code, commented-out code, or TODO items that should be addressed?"
+      TQ-06.2:
+        name: Change Documentation
+        dqs:
+          - "Is the PR description clear about what changed and why?"
+          - "Are there architectural decisions in this change that should be documented?"
+          - "Does this change require updating user-facing documentation?"
+          - "Does this change require updating operational runbooks?"
+      TQ-06.3:
+        name: Reviewability
+        dqs:
+          - "Is the change small enough to review effectively? Should it be split?"
+          - "Are the commits logically organized? (one concern per commit)"
+          - "Are there unrelated changes mixed in? (formatting, refactoring, feature)"
+          - "Is there a test plan or manual verification steps described?"
