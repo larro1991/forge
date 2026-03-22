@@ -1,0 +1,247 @@
+# FORGE Discipline: Troubleshooting / Incident Response
+# When something breaks, this discipline eliminates guessing.
+# Every hypothesis must be proven or ruled out. No hand-waving.
+
+name: Troubleshooting
+id: troubleshooting
+version: "1.0.0"
+description: >
+  Systematic incident response and root cause analysis. Forces evidence-based
+  diagnosis: every hypothesis reaches a terminal state (CONFIRMED, RULED_OUT,
+  NEEDS_DATA). Inspired by Kepner-Tregoe problem analysis.
+
+# Triage presets for partial runs
+triage_presets:
+  quick-triage:   [BQ-01, BQ-02, BQ-05]
+  root-cause:     [BQ-03, BQ-04, BQ-05, BQ-06]
+  post-fix:       [BQ-07, BQ-08]
+  symptoms-only:  [BQ-01, BQ-02]
+
+questions:
+  BQ-01:
+    name: Symptoms
+    question: What is broken, what is working, and what changed?
+    tqs:
+      TQ-01.1:
+        name: Problem Statement
+        dqs:
+          - "What is the user-visible symptom? Describe it in one sentence."
+          - "When was the problem first observed? By whom?"
+          - "Is the problem intermittent or constant?"
+          - "Has this exact problem occurred before? When? What fixed it?"
+          - "What is the business impact right now? (users affected, revenue, SLA)"
+      TQ-01.2:
+        name: Is / Is Not Analysis
+        dqs:
+          - "WHERE does the problem occur? (which services, endpoints, regions)"
+          - "WHERE does it NOT occur? (what similar services/endpoints are fine)"
+          - "WHEN does it happen? (time of day, load level, after specific actions)"
+          - "WHEN does it NOT happen? (what conditions make it work normally)"
+          - "WHO is affected? (all users, specific roles, specific clients)"
+          - "WHO is NOT affected? (what's different about unaffected users)"
+          - "WHAT is the scope? (one endpoint, one service, entire system)"
+          - "WHAT is working normally that you'd expect to be broken too?"
+      TQ-01.3:
+        name: Current State
+        dqs:
+          - "Is the system still experiencing the problem right now?"
+          - "Has any mitigation been applied? (restart, rollback, config change)"
+          - "What is the current error rate / latency / degradation level?"
+          - "Are there any cascading effects on other systems?"
+
+  BQ-02:
+    name: Blast Radius
+    question: How far has the damage spread?
+    tqs:
+      TQ-02.1:
+        name: Service Impact
+        dqs:
+          - "List every service that is degraded or down."
+          - "For each affected service — is it completely down or partially degraded?"
+          - "Are there services that depend on the affected ones? Are they impacted?"
+          - "Is the blast radius growing, stable, or shrinking?"
+      TQ-02.2:
+        name: Data Impact
+        dqs:
+          - "Has any data been lost or corrupted?"
+          - "Are writes still happening? Could they be writing bad data?"
+          - "Is there a risk of data inconsistency between systems?"
+          - "Have any backups been affected?"
+      TQ-02.3:
+        name: User Impact
+        dqs:
+          - "How many users are affected? What percentage of total?"
+          - "Can affected users work around the problem?"
+          - "Have users been notified? Is there a status page update?"
+          - "Are there SLA or contractual implications?"
+
+  BQ-03:
+    name: What Changed
+    question: What is different between when it worked and when it broke?
+    tqs:
+      TQ-03.1:
+        name: Recent Changes
+        dqs:
+          - "What was deployed in the last 24 hours? (code, config, infrastructure)"
+          - "Were there any database migrations or schema changes?"
+          - "Were there any dependency updates? (packages, OS, runtime)"
+          - "Were there any infrastructure changes? (scaling, network, DNS, certs)"
+          - "Were there any configuration changes? (env vars, feature flags, secrets)"
+      TQ-03.2:
+        name: External Changes
+        dqs:
+          - "Did any external service change? (API, provider, third-party)"
+          - "Did traffic patterns change? (load spike, DDoS, viral event)"
+          - "Did anything expire? (certificates, tokens, licenses, DNS records)"
+          - "Are there any known outages at providers/dependencies?"
+      TQ-03.3:
+        name: Change Correlation
+        dqs:
+          - "Does the problem timeline correlate with any specific change?"
+          - "Can the change be reverted? Has reverting been attempted?"
+          - "If reverted, did the problem stop? (proves/disproves correlation)"
+          - "Were there multiple changes close together that could interact?"
+
+  BQ-04:
+    name: Signals
+    question: What do the logs, metrics, traces, and error rates tell us?
+    tqs:
+      TQ-04.1:
+        name: Logs
+        dqs:
+          - "What errors appear in the logs around the time of the incident?"
+          - "Is there a first error — the earliest log entry related to this problem?"
+          - "Are the errors in one service or multiple? What's the order?"
+          - "Are there any warnings or unusual patterns before the first error?"
+          - "Do the logs contain enough context to trace the issue? (request IDs, user IDs)"
+      TQ-04.2:
+        name: Metrics
+        dqs:
+          - "What do the error rate graphs show? When did they spike?"
+          - "What do the latency graphs show? Is there a correlation with errors?"
+          - "What do resource metrics show? (CPU, memory, disk, connections)"
+          - "Are there any saturation signals? (queue depth, connection pool, disk I/O)"
+          - "Do any metrics show a gradual degradation before the acute failure?"
+      TQ-04.3:
+        name: Traces
+        dqs:
+          - "Can you trace a failing request end-to-end?"
+          - "Where in the trace does the failure occur? (which service, which call)"
+          - "What is the latency distribution of failing vs. succeeding requests?"
+          - "Are there timeout patterns? Which calls are timing out?"
+      TQ-04.4:
+        name: Health Checks
+        dqs:
+          - "What do health check endpoints report for each service?"
+          - "Are health checks actually testing the failing path, or are they superficial?"
+          - "Did monitoring detect the problem, or was it user-reported?"
+          - "How long between problem start and detection? Why that delay?"
+
+  BQ-05:
+    name: Hypotheses
+    question: What could be causing this? Prove each one or rule it out.
+    tqs:
+      TQ-05.1:
+        name: Hypothesis Generation
+        dqs:
+          - "Based on symptoms and signals, list every plausible root cause."
+          - "For each hypothesis — what evidence supports it?"
+          - "For each hypothesis — what evidence contradicts it?"
+          - "For each hypothesis — what test would definitively prove or disprove it?"
+          - "Rank hypotheses by likelihood (based on evidence, not gut feeling)."
+      TQ-05.2:
+        name: Hypothesis Testing
+        dqs:
+          - "For the most likely hypothesis — run the definitive test. What was the result?"
+          - "If confirmed — proceed to BQ-06 (Root Cause Isolation)."
+          - "If ruled out — move to the next hypothesis. What test? What result?"
+          - "If all hypotheses ruled out — what new evidence would generate new hypotheses?"
+          - "Are there compound causes? (two things that are fine individually but fail together)"
+      TQ-05.3:
+        name: Hypothesis States
+        dqs:
+          - "For each hypothesis, record its final state: CONFIRMED, RULED_OUT, or NEEDS_DATA."
+          - "For CONFIRMED hypotheses — what was the definitive evidence?"
+          - "For RULED_OUT hypotheses — what disproved them?"
+          - "For NEEDS_DATA hypotheses — what data is missing and how to get it?"
+
+  BQ-06:
+    name: Root Cause Isolation
+    question: Can you reproduce it, bisect it, and prove the exact cause?
+    tqs:
+      TQ-06.1:
+        name: Reproduction
+        dqs:
+          - "Can you reproduce the problem on demand?"
+          - "What are the minimum steps to reproduce?"
+          - "Can you reproduce in a non-production environment?"
+          - "If not reproducible — is it timing-dependent, load-dependent, or data-dependent?"
+      TQ-06.2:
+        name: Bisection
+        dqs:
+          - "Can you narrow the failure to a specific component?"
+          - "Can you narrow it to a specific commit, config change, or deployment?"
+          - "Can you narrow it to a specific input or data condition?"
+          - "What is the smallest change that introduces the failure?"
+      TQ-06.3:
+        name: Proof
+        dqs:
+          - "State the root cause in one sentence."
+          - "What evidence proves this is the root cause (not a symptom or contributing factor)?"
+          - "Is this the proximate cause or is there a deeper systemic cause?"
+          - "Are there contributing factors that made this root cause worse?"
+          - "Would fixing only this root cause prevent recurrence? Or are contributing factors also needed?"
+
+  BQ-07:
+    name: Fix & Verify
+    question: Fix it, prove it's fixed, and check for regressions.
+    tqs:
+      TQ-07.1:
+        name: Fix Design
+        dqs:
+          - "What is the proposed fix? Describe it specifically."
+          - "Is this a permanent fix or a temporary mitigation?"
+          - "What is the blast radius of the fix? Could it break something else?"
+          - "Does the fix require a deployment, restart, or config change?"
+          - "What is the rollback plan if the fix makes things worse?"
+      TQ-07.2:
+        name: Fix Verification
+        dqs:
+          - "After applying the fix — is the original symptom gone?"
+          - "After applying the fix — are error rates back to baseline?"
+          - "After applying the fix — are latency/performance metrics normal?"
+          - "Have you checked for regressions in related functionality?"
+          - "Has the fix been observed in production for long enough to confirm stability?"
+      TQ-07.3:
+        name: Fix Documentation
+        dqs:
+          - "Is the fix documented? (commit message, ticket, runbook update)"
+          - "Is there a test that would catch this regression in the future?"
+          - "Has the monitoring/alerting been updated to detect this failure mode?"
+          - "Has the on-call team been briefed on the fix and what to watch for?"
+
+  BQ-08:
+    name: Prevention
+    question: What would have caught this earlier, and what prevents recurrence?
+    tqs:
+      TQ-08.1:
+        name: Detection Improvement
+        dqs:
+          - "Would better monitoring have caught this sooner? What monitoring?"
+          - "Would better alerting have caught this sooner? What alert rule?"
+          - "Would automated health checks have caught this? What check?"
+          - "How much time elapsed between root cause and detection? Is that acceptable?"
+      TQ-08.2:
+        name: Prevention Measures
+        dqs:
+          - "What process change would prevent this class of problem? (review, testing, deployment)"
+          - "What technical change would prevent recurrence? (guard, validation, circuit breaker)"
+          - "What documentation is needed? (runbook, architecture diagram, decision record)"
+          - "Are there similar systems that could have the same vulnerability?"
+      TQ-08.3:
+        name: Systemic Issues
+        dqs:
+          - "Is this a symptom of a larger systemic problem? (tech debt, understaffing, process gap)"
+          - "Has a similar incident happened before? Is there a pattern?"
+          - "Are the action items from this incident tracked and assigned?"
+          - "When will the action items be reviewed for completion?"

@@ -1,0 +1,508 @@
+# FORGE Discipline: Security Assessment
+# Version 1.2.1 — Extracted from FORGE engine.py FRAMEWORK dict
+# 13 BQs, 269 DQs covering security, resilience, operations, code quality, and AI/ML
+
+name: Security Assessment
+id: security
+version: "1.2.1"
+description: >
+  Comprehensive software analysis covering security, resilience, performance,
+  operations, code quality, and AI/ML components. The original FORGE discipline.
+
+# Triage presets — named subsets of BQs for targeted assessments
+triage_presets:
+  security:       [BQ-04, BQ-05, BQ-10, BQ-13]
+  production:     [BQ-06, BQ-07, BQ-09]
+  performance:    [BQ-03, BQ-11]
+  post-incident:  [BQ-06, BQ-07, BQ-03]
+  onboarding:     [BQ-01, BQ-02, BQ-12]
+  ai-safety:      [BQ-04, BQ-05, BQ-10, BQ-13]
+
+questions:
+  BQ-01:
+    name: Purpose & Scope
+    question: What does this software do and what are its boundaries?
+    tqs:
+      TQ-01.1:
+        name: Core Function
+        dqs:
+          - "What is the single-sentence description of what this software does?"
+          - "Who are the intended users? (roles, skill levels, access patterns)"
+          - "What are the primary use cases? List each one."
+          - "For each use case — what does 'success' look like? What is the expected output?"
+          - "What is explicitly OUT of scope? What should this software NOT do?"
+      TQ-01.2:
+        name: Requirements Traceability
+        dqs:
+          - "Is there a written specification, requirements doc, or design doc?"
+          - "For each stated requirement — is it implemented? Is it tested?"
+          - "Are there implemented features that have NO corresponding requirement? (scope creep)"
+          - "Are there requirements that conflict with each other?"
+          - "Who decides when requirements change? Is there a change control process?"
+      TQ-01.3:
+        name: Assumptions & Constraints
+        dqs:
+          - "What assumptions does the software make about its environment? (OS, network, disk, memory)"
+          - "What assumptions does it make about its users? (trusted? authenticated? technical?)"
+          - "What assumptions does it make about its data? (clean? validated? well-formed?)"
+          - "Which of these assumptions are validated at runtime vs. taken on faith?"
+          - "What are the hard constraints? (budget, hardware, compliance, legacy compatibility)"
+
+  BQ-02:
+    name: Architecture & Dependencies
+    question: How is it built and what does it depend on?
+    tqs:
+      TQ-02.1:
+        name: System Architecture
+        dqs:
+          - "What is the high-level architecture? (monolith, microservices, serverless, hybrid)"
+          - "Draw the component diagram — what talks to what?"
+          - "What are the communication patterns? (sync HTTP, async queues, events, shared DB)"
+          - "Where are the single points of failure?"
+          - "What happens if any single component goes down? (cascading failures?)"
+      TQ-02.2:
+        name: Technology Stack
+        dqs:
+          - "What languages and versions are used? Are any end-of-life or unsupported?"
+          - "What frameworks are used? What versions? Are they actively maintained?"
+          - "What databases/datastores are used? What version? What configuration?"
+          - "What OS and runtime requirements exist?"
+          - "Are there any vendor-locked components? What's the exit strategy?"
+      TQ-02.3:
+        name: Dependencies
+        dqs:
+          - "List all direct dependencies. For each: version, license, last update, known CVEs."
+          - "List all transitive dependencies. Any with known vulnerabilities?"
+          - "Are dependencies pinned to exact versions or floating?"
+          - "Is there a dependency update process? How often are they reviewed?"
+          - "Are there any dependencies that are abandoned, archived, or single-maintainer?"
+          - "Could any dependency be removed entirely? (used for one function that could be inlined)"
+          - "Are there build/runtime files (docker-compose, .env, Makefile) that contain secrets? Are they gitignored?"
+      TQ-02.4:
+        name: Build System
+        dqs:
+          - "What is the build process? Is it documented? Is it reproducible?"
+          - "Can you build from a clean checkout with one command?"
+          - "Are there build-time secrets or environment-specific config baked in?"
+          - "How long does a full build take? Is it parallelizable?"
+          - "Are build artifacts versioned and traceable to a specific commit?"
+
+  BQ-03:
+    name: Data Flow & Storage
+    question: Where does data come from, where does it go, and what happens to it in between?
+    tqs:
+      TQ-03.1:
+        name: Data Inputs
+        dqs:
+          - "What are ALL the input sources? (user input, APIs, files, databases, message queues, environment variables)"
+          - "For each input — what format is expected? What format could actually arrive?"
+          - "For each input — what happens if it's missing? Malformed? Enormous? Empty?"
+          - "Are inputs validated at the boundary before processing?"
+          - "Are inputs sanitized/escaped before use in queries, commands, or rendering?"
+      TQ-03.2:
+        name: Data Processing
+        dqs:
+          - "What transformations happen to data between input and output?"
+          - "Are there any data transformations that are lossy? (truncation, rounding, encoding changes)"
+          - "Is processing idempotent? What happens if the same input is processed twice?"
+          - "Are there race conditions in data processing? (concurrent access, TOCTOU)"
+          - "What happens if processing is interrupted midway? (partial writes, corrupt state)"
+      TQ-03.3:
+        name: Data Storage
+        dqs:
+          - "What data is persisted? Where? In what format?"
+          - "What is the data retention policy? Is old data ever cleaned up?"
+          - "Is stored data encrypted at rest?"
+          - "What are the backup procedures? How often? Tested restore?"
+          - "Is there data in multiple stores that must stay in sync? How is consistency maintained?"
+          - "What happens if storage is full? Read-only filesystem? Slow disk?"
+      TQ-03.4:
+        name: Data Outputs
+        dqs:
+          - "What are ALL the output destinations? (UI, APIs, files, logs, emails, webhooks)"
+          - "Is sensitive data ever included in outputs that go to less-trusted destinations?"
+          - "Are outputs properly encoded for their destination? (HTML-escaped for web, parameterized for SQL)"
+          - "Can output volume overwhelm a downstream consumer?"
+          - "Are outputs validated before sending? (well-formed JSON, valid email, etc.)"
+
+  BQ-04:
+    name: Authentication & Authorization
+    question: Who and what can access it, and what can they do?
+    tqs:
+      TQ-04.1:
+        name: Authentication
+        dqs:
+          - "How do users prove they are who they claim to be? (passwords, tokens, SSO, certificates, none)"
+          - "How are credentials stored? (hashed? salted? what algorithm?)"
+          - "Is there multi-factor authentication? Is it optional or required?"
+          - "How are sessions managed? (tokens, cookies, server-side sessions)"
+          - "What is the session lifetime? Is there idle timeout? Absolute timeout?"
+          - "How does logout work? Are tokens/sessions actually invalidated?"
+          - "Is there account lockout after failed attempts? Is it bypassable?"
+          - "How does password/credential reset work? Is the reset flow itself secure?"
+      TQ-04.2:
+        name: Authorization
+        dqs:
+          - "What is the permission model? (RBAC, ABAC, ACLs, none)"
+          - "List every role/permission level. What can each do?"
+          - "Is authorization checked on every request or only at login?"
+          - "Can a user escalate their own privileges? (parameter tampering, IDOR)"
+          - "Are there admin/superuser accounts? How are they protected?"
+          - "Is there separation of duties? (the person who deploys can't approve their own deploy)"
+      TQ-04.3:
+        name: Service-to-Service Auth
+        dqs:
+          - "How do internal services authenticate to each other?"
+          - "Are service credentials rotatable without downtime?"
+          - "Is there network-level isolation between services? (zero trust vs. trusted network)"
+          - "Can a compromised internal service access other services' data?"
+          - "Are service-to-service calls authenticated AND authorized? (not just 'is it internal')"
+          - "Is the Docker socket mounted to any container? RW or RO? What API calls does the service need?"
+      TQ-04.4:
+        name: API Security
+        dqs:
+          - "Are all API endpoints authenticated? List any unauthenticated endpoints and justify each."
+          - "Is there rate limiting? Per user? Per IP? Per endpoint?"
+          - "Are API keys/tokens scoped to minimum necessary permissions?"
+          - "Is there an API gateway or is each service handling its own auth?"
+          - "Are deprecated API versions still accessible? Are they still secure?"
+
+  BQ-05:
+    name: Input Validation & Injection Defense
+    question: How does the software handle untrusted input?
+    tqs:
+      TQ-05.1:
+        name: Injection Vectors
+        dqs:
+          - "Does the software construct SQL queries with user input? How?"
+          - "Does it execute shell commands with user input? How is it escaped?"
+          - "Does it render user input in HTML/JavaScript? Is it escaped? (XSS)"
+          - "Does it process user-supplied file paths? Can path traversal occur?"
+          - "Does it deserialize user-supplied data? (pickle, YAML, XML)"
+          - "Does it process user-supplied XML? Is XXE disabled?"
+          - "Does it use user input in LDAP queries, regex, HTTP headers, or redirects?"
+      TQ-05.2:
+        name: Validation Strategy
+        dqs:
+          - "Is validation allowlist-based or denylist-based?"
+          - "Where does validation happen? Client-side only? Server-side? Both?"
+          - "Are file uploads validated? (type, size, content — not just extension)"
+          - "Are numeric inputs bounds-checked?"
+          - "Are string inputs length-limited?"
+          - "Is there a central validation layer or is each endpoint rolling its own?"
+      TQ-05.3:
+        name: Output Encoding
+        dqs:
+          - "Is output context-aware encoded?"
+          - "Are Content-Type headers set correctly on all responses?"
+          - "Are security headers present? (CSP, X-Frame-Options, HSTS)"
+          - "Is there protection against open redirects?"
+          - "Are error messages sanitized? (no stack traces leaked to users)"
+
+  BQ-06:
+    name: Error Handling & Resilience
+    question: What happens when things go wrong?
+    tqs:
+      TQ-06.1:
+        name: Error Handling
+        dqs:
+          - "Is there a consistent error handling pattern across the codebase?"
+          - "Are errors caught at appropriate levels?"
+          - "Do error responses reveal internal details?"
+          - "Are errors logged with enough context to diagnose?"
+          - "Are expected errors handled differently from unexpected errors?"
+      TQ-06.2:
+        name: Failure Modes
+        dqs:
+          - "What happens if the database is unreachable?"
+          - "What happens if an external API is down or slow?"
+          - "What happens if disk is full?"
+          - "What happens if memory is exhausted?"
+          - "What happens if the network is intermittent?"
+          - "Is there circuit breaker logic for external dependencies?"
+          - "Are retries implemented? With backoff? With jitter? With a max?"
+      TQ-06.3:
+        name: Recovery
+        dqs:
+          - "After a crash, does the system recover to a consistent state automatically?"
+          - "Are there operations that leave inconsistent state if interrupted?"
+          - "Is there a defined recovery procedure? Documented? Tested?"
+          - "How long does recovery take? (RTO)"
+          - "How much data can be lost? (RPO)"
+      TQ-06.4:
+        name: Graceful Degradation
+        dqs:
+          - "Can the system operate with reduced functionality when dependencies are down?"
+          - "Are there fallback paths for critical operations?"
+          - "Does the system communicate its degraded state to users/operators?"
+          - "Are there timeouts on all external calls? Are they reasonable?"
+
+  BQ-07:
+    name: Observability
+    question: How do you know it's working, and how do you find out when it's not?
+    tqs:
+      TQ-07.1:
+        name: Logging
+        dqs:
+          - "What is logged? Is there a logging standard?"
+          - "Are logs structured (JSON) or unstructured?"
+          - "Do logs include correlation/request IDs?"
+          - "Are sensitive data values excluded from logs?"
+          - "Where are logs stored? For how long? Are they searchable?"
+          - "Is log volume manageable? Could an attacker trigger log flooding?"
+      TQ-07.2:
+        name: Monitoring & Alerting
+        dqs:
+          - "What metrics are collected?"
+          - "Are there health check endpoints? What do they actually verify?"
+          - "What conditions trigger alerts? Who receives them?"
+          - "Are there alerts for business-level anomalies?"
+          - "Is there alert fatigue? Are alerts actionable or noisy?"
+          - "Would you know within 5 minutes if the system stopped working?"
+      TQ-07.3:
+        name: Tracing & Debugging
+        dqs:
+          - "Can you trace a single request through all services?"
+          - "Can you reproduce a production issue locally?"
+          - "Are there runbooks for common issues?"
+          - "Is there a way to enable debug logging without redeploying?"
+      TQ-07.4:
+        name: Audit Trail
+        dqs:
+          - "Are security-relevant actions logged?"
+          - "Are audit logs tamper-resistant?"
+          - "Can you answer 'who did what, when, from where' for any action?"
+          - "Are audit logs retained long enough for compliance?"
+
+  BQ-08:
+    name: Testing
+    question: How do you know the software does what it should — and doesn't do what it shouldn't?
+    tqs:
+      TQ-08.1:
+        name: Test Coverage
+        dqs:
+          - "What percentage of code is covered by tests? What percentage of BEHAVIOR?"
+          - "Are there unit tests? What do they cover?"
+          - "Are there integration tests? Real dependencies or mocks?"
+          - "Are there end-to-end tests? Critical user journeys?"
+          - "What is NOT tested? Why?"
+      TQ-08.2:
+        name: Test Quality
+        dqs:
+          - "Do tests verify behavior or implementation?"
+          - "Are there tests for error/edge cases?"
+          - "Are there tests for security scenarios?"
+          - "Do tests run in CI on every commit?"
+          - "How long does the test suite take? Flaky tests?"
+      TQ-08.3:
+        name: Security Testing
+        dqs:
+          - "Has the software had a security audit or penetration test?"
+          - "Are there automated security scans? (SAST, DAST)"
+          - "Is there fuzzing for input handling?"
+          - "Are security regression tests written for every vulnerability found?"
+      TQ-08.4:
+        name: Data Testing
+        dqs:
+          - "Are tests run against realistic data?"
+          - "Are there data migration tests?"
+          - "Is test data isolated from production data?"
+          - "Are tests deterministic?"
+
+  BQ-09:
+    name: Deployment & Operations
+    question: How does it get to production and how is it managed there?
+    tqs:
+      TQ-09.1:
+        name: Deployment Pipeline
+        dqs:
+          - "What is the deployment process? Is it automated? Documented?"
+          - "Can you deploy with one command? How long does it take?"
+          - "Is there a staging/pre-production environment?"
+          - "Are deployments atomic? (all-or-nothing)"
+          - "Can you roll back a bad deploy? How quickly?"
+      TQ-09.2:
+        name: Configuration Management
+        dqs:
+          - "How is configuration managed?"
+          - "Is configuration separated from code?"
+          - "Can configuration be changed without redeploying?"
+          - "Is there configuration drift between environments?"
+          - "Are configuration changes audited?"
+      TQ-09.3:
+        name: Infrastructure
+        dqs:
+          - "Is infrastructure defined as code?"
+          - "Can the entire environment be recreated from scratch?"
+          - "Are there resource limits set?"
+          - "Is there auto-scaling? What triggers it?"
+          - "Is the infrastructure hardened?"
+      TQ-09.4:
+        name: Operational Readiness
+        dqs:
+          - "Is there an on-call rotation? Escalation path?"
+          - "Are there runbooks for common operational tasks?"
+          - "Can you perform maintenance without downtime?"
+          - "Is there a disaster recovery plan? Has it been tested?"
+          - "What is the bus factor?"
+
+  BQ-10:
+    name: Secrets & Sensitive Data
+    question: Where are the keys, and who's guarding them?
+    tqs:
+      TQ-10.1:
+        name: Credential Management
+        dqs:
+          - "List every secret the system uses."
+          - "Where is each secret stored?"
+          - "Is each secret defined in exactly ONE place? Or duplicated across files?"
+          - "Are any secrets committed to version control? (check git history)"
+          - "Can secrets be rotated without downtime?"
+          - "When were secrets last rotated?"
+          - "Are secrets scoped to minimum necessary?"
+      TQ-10.2:
+        name: Data Classification
+        dqs:
+          - "What data qualifies as sensitive? (PII, financial, health, credentials)"
+          - "Is sensitive data identified and labeled in the schema/codebase?"
+          - "Is sensitive data encrypted at rest? With what? Who holds the keys?"
+          - "Is sensitive data encrypted in transit? (TLS everywhere? Internal too?)"
+          - "Is sensitive data masked in non-production environments?"
+      TQ-10.3:
+        name: Data Exposure
+        dqs:
+          - "Can sensitive data appear in logs?"
+          - "Can sensitive data appear in error messages?"
+          - "Can sensitive data appear in URLs?"
+          - "Can sensitive data be exported by authorized users? Audited?"
+          - "Is sensitive data cached? Where? For how long?"
+      TQ-10.4:
+        name: Compliance
+        dqs:
+          - "What regulations apply?"
+          - "Is there a data processing agreement with third parties?"
+          - "Can user data be exported on request?"
+          - "Can user data be deleted on request? Completely?"
+          - "Are data retention periods defined and enforced?"
+
+  BQ-11:
+    name: Performance & Scalability
+    question: Can it handle load, and what breaks first?
+    tqs:
+      TQ-11.1:
+        name: Current Performance
+        dqs:
+          - "What are the current response times? (p50, p95, p99)"
+          - "What is the current throughput?"
+          - "What are the resource utilization patterns?"
+          - "Are there known slow endpoints or operations?"
+          - "Are there N+1 queries, missing indexes, or expensive joins?"
+          - "Are batch operations bounded by time or count? What happens when input doubles?"
+      TQ-11.2:
+        name: Scalability
+        dqs:
+          - "What is the bottleneck under load?"
+          - "Can it scale horizontally?"
+          - "Can it scale vertically? What are the limits?"
+          - "What shared state prevents horizontal scaling?"
+          - "Is there a caching layer? What is the invalidation strategy?"
+      TQ-11.3:
+        name: Load Testing
+        dqs:
+          - "Has load testing been performed?"
+          - "What is the breaking point? What fails first?"
+          - "What happens at 2x, 5x, 10x expected load?"
+          - "Does the system degrade gracefully or fall off a cliff?"
+      TQ-11.4:
+        name: Resource Management
+        dqs:
+          - "Are database connections pooled?"
+          - "Are HTTP connections reused or opened per request?"
+          - "Are there resource leaks?"
+          - "Are there unbounded queues, caches, or buffers?"
+          - "Are there timeouts on all blocking operations?"
+
+  BQ-12:
+    name: Code Quality & Maintainability
+    question: Can someone else understand, modify, and extend this code?
+    tqs:
+      TQ-12.1:
+        name: Code Organization
+        dqs:
+          - "Is the codebase organized by feature, layer, or some other principle?"
+          - "Is the directory structure intuitive?"
+          - "Are there clear boundaries between modules?"
+          - "Is there dead code? Unused imports?"
+          - "Are there TODO/FIXME/HACK comments?"
+      TQ-12.2:
+        name: Code Consistency
+        dqs:
+          - "Is there a style guide? Is it enforced?"
+          - "Are naming conventions consistent?"
+          - "Are design patterns used consistently?"
+          - "Is there a contribution guide?"
+      TQ-12.3:
+        name: Documentation
+        dqs:
+          - "Is there architectural documentation? Is it current?"
+          - "Are APIs documented?"
+          - "Are complex algorithms or business logic explained?"
+          - "Are setup/install instructions accurate?"
+      TQ-12.4:
+        name: Technical Debt
+        dqs:
+          - "What shortcuts were taken? Are they documented?"
+          - "What would the developers do differently if starting over?"
+          - "Are there known anti-patterns?"
+          - "Is there a plan to address tech debt?"
+          - "What parts of the code does everyone avoid touching?"
+
+  BQ-13:
+    name: AI/ML Components
+    question: If the software uses AI/ML models, LLM APIs, or autonomous agents.
+    skip_if: No AI/ML components
+    tqs:
+      TQ-13.1:
+        name: Model Integration
+        dqs:
+          - "What AI/ML models or LLM APIs does the system use?"
+          - "What is each model used for?"
+          - "What happens if the model API is down, slow, or errors?"
+          - "What happens if the model returns hallucinated output?"
+          - "Is there a fallback when AI is unavailable?"
+          - "Are model responses validated before acting on them?"
+      TQ-13.2:
+        name: Prompt Security
+        dqs:
+          - "Can user-controlled input reach the model prompt?"
+          - "Is there input sanitization before prompt construction?"
+          - "Can the model be tricked into executing unintended actions?"
+          - "Are model outputs sanitized before use in SQL, shell, or HTML?"
+          - "Are tool outputs passed through shell-interpreted constructs (heredocs, eval, template strings)?"
+          - "Is the system prompt protected from extraction?"
+      TQ-13.3:
+        name: Cost & Token Management
+        dqs:
+          - "Is token usage tracked per request?"
+          - "Are there per-request or per-user cost limits?"
+          - "Could a malicious or accidental input cause runaway token consumption?"
+          - "Is there a maximum prompt/context size enforced?"
+          - "Are large inputs truncated or rejected before sending to the model?"
+      TQ-13.4:
+        name: Agent Behavior
+        dqs:
+          - "What actions can the agent take? What is the maximum blast radius?"
+          - "Is there a human-in-the-loop for destructive actions?"
+          - "Are agent actions logged with full context?"
+          - "Is the agent's temperature appropriate for its role?"
+          - "Can the agent enter an infinite loop? Is there a max-iterations limit?"
+          - "Are there competing skills/tools that could cause wrong selection?"
+          - "Does any automated process execute code generated by an LLM? What validation exists?"
+          - "After updating instructions, is conversation history cleared?"
+      TQ-13.5:
+        name: Data Privacy with AI
+        dqs:
+          - "Is sensitive data sent to external model APIs?"
+          - "Is there a sanitization layer between internal data and the model?"
+          - "Are model API calls logged? Do logs contain sensitive prompt content?"
+          - "Does the provider retain or train on submitted data?"
