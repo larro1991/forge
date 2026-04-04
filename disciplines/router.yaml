@@ -71,6 +71,11 @@ intent_signals:
     primary: performance-review
     confidence: 0.9
 
+  people_performance:
+    keywords: [people review, HR review, people performance, talent review, team health, headcount review, org review, staffing review, people ops, human resources, HR assessment, workforce review, employee review, team performance review]
+    primary: performance-review
+    confidence: 0.9
+
   full_assessment:
     keywords: [full assessment, full review, comprehensive, everything, end to end]
     primary: security
