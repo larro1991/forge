@@ -12,11 +12,13 @@ description: >
   Every improvement is scoped, prioritized, and tied to a measurable target.
 
 triage_presets:
-  baseline:     [BQ-01]
-  bottlenecks:  [BQ-02, BQ-03]
-  resources:    [BQ-03, BQ-04]
-  quick:        [BQ-01, BQ-02, BQ-05]
-  full:         [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06]
+  baseline:           [BQ-01]
+  bottlenecks:        [BQ-02, BQ-03]
+  resources:          [BQ-03, BQ-04]
+  quick:              [BQ-01, BQ-02, BQ-05]
+  full:               [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06]
+  compensation-only:  [BQ-01, BQ-03]
+  growth-only:        [BQ-04, BQ-05]
 
 questions:
   BQ-01:
