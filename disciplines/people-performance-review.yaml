@@ -1,0 +1,178 @@
+# FORGE Discipline: People Performance Review
+# Structured evaluation of individual employee performance for managers and HR partners.
+# Covers goal attainment, strengths, development areas, career growth, compensation, and action planning.
+# Every assessment concludes with concrete commitments and documented timelines.
+
+name: People Performance Review
+id: people-performance-review
+version: "1.0.0"
+description: >
+  Structured people performance review for managers and HR partners. Evaluates goal
+  attainment, strengths, development areas, career trajectory, compensation alignment,
+  and action planning. Every assessment concludes with concrete commitments and timelines.
+
+triage_presets:
+  goals-only:    [BQ-01]
+  strengths:     [BQ-02]
+  development:   [BQ-03]
+  quick:         [BQ-01, BQ-02, BQ-03]
+  growth:        [BQ-03, BQ-04]
+  compensation:  [BQ-01, BQ-05]
+  full:          [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06]
+
+questions:
+  BQ-01:
+    name: Goal Attainment & Performance Expectations
+    question: How did the employee perform against their goals and expectations this period?
+    tqs:
+      TQ-01.1:
+        name: Goal Review
+        dqs:
+          - "What goals were set at the start of this review period? Were they documented and agreed upon?"
+          - "Which goals were fully achieved? Which were partially achieved? Which were missed?"
+          - "Were goals adjusted mid-cycle? Why, and with whose approval?"
+          - "What was the employee's own assessment of goal attainment, and does it match your view?"
+      TQ-01.2:
+        name: Quality of Work
+        dqs:
+          - "What is the quality of the employee's core deliverables in terms of accuracy, reliability, and completeness?"
+          - "Are there recurring patterns of rework, missed deadlines, or incomplete outputs?"
+          - "How does the employee's output compare to peers at the same level?"
+          - "What evidence — metrics, artifacts, stakeholder feedback — supports the quality assessment?"
+      TQ-01.3:
+        name: Execution & Reliability
+        dqs:
+          - "Does the employee consistently deliver on commitments, or are surprises and slippages common?"
+          - "How does the employee handle competing priorities or shifting requirements mid-cycle?"
+          - "What is the employee's sense of ownership — do they see things through without being prompted?"
+          - "Are there concrete examples of going above expectations, or of falling meaningfully below?"
+
+  BQ-02:
+    name: Strengths & Contributions
+    question: What are the employee's standout strengths and most valuable contributions this period?
+    tqs:
+      TQ-02.1:
+        name: Core Strengths
+        dqs:
+          - "What are the employee's two or three strongest skills or behaviors demonstrated this period?"
+          - "In which situations does this employee most clearly outperform their peers?"
+          - "What do teammates, stakeholders, or customers consistently praise about this employee?"
+          - "Which strengths are uniquely differentiating on this team or in this org?"
+      TQ-02.2:
+        name: Business Impact
+        dqs:
+          - "What is the most significant business impact this employee had this period?"
+          - "Are there measurable outcomes — revenue, cost savings, quality improvement, speed — tied to their work?"
+          - "Did the employee take on high-priority or high-visibility projects? What was the result?"
+          - "How does this employee make the people around them more effective?"
+      TQ-02.3:
+        name: Collaboration & Influence
+        dqs:
+          - "How effectively does the employee collaborate with peers, cross-functional partners, and leadership?"
+          - "Does the employee share knowledge and actively help others grow?"
+          - "Are there examples of the employee leading without formal authority?"
+          - "How does the employee handle conflict or disagreement — is the approach constructive?"
+
+  BQ-03:
+    name: Development Areas
+    question: Where does the employee need to grow, and what is blocking or slowing their progress?
+    tqs:
+      TQ-03.1:
+        name: Skill Gaps
+        dqs:
+          - "What are the most important skills the employee needs to develop for their current role?"
+          - "What skills are required at the next level that the employee has not yet demonstrated?"
+          - "Are there technical, functional, or leadership competencies that are consistently underdeveloped?"
+          - "Has the employee received feedback on these gaps before? What was the response and sustained change?"
+      TQ-03.2:
+        name: Behavioral Patterns
+        dqs:
+          - "Are there recurring behavioral patterns — communication, ownership, proactivity — that limit effectiveness?"
+          - "Does the employee respond well to feedback? Are changes durable over time?"
+          - "Are there interpersonal issues or team dynamics concerns that need to be addressed?"
+          - "Is the employee self-aware about their development areas, or do they lack insight into the gaps?"
+      TQ-03.3:
+        name: Root Causes & Support Needed
+        dqs:
+          - "Are development gaps due to skill, motivation, opportunity, or insufficient support?"
+          - "Has the employee had clear expectations set and the resources needed to meet them?"
+          - "Are there environmental factors — team dynamics, tooling, manager support — contributing to the gaps?"
+          - "What coaching, resources, or structural changes would most accelerate the employee's growth?"
+
+  BQ-04:
+    name: Career Growth & Goals
+    question: What does the employee want next, and what is the realistic path forward?
+    tqs:
+      TQ-04.1:
+        name: Employee Aspirations
+        dqs:
+          - "What are the employee's stated career goals for the next one to two years?"
+          - "Does the employee want to deepen expertise in their current role, move into a new role, or take on leadership?"
+          - "Are their goals realistic given current performance and available opportunities?"
+          - "Has the employee taken ownership of their development, or are they primarily waiting to be told what to do?"
+      TQ-04.2:
+        name: Readiness for Next Level
+        dqs:
+          - "Is the employee ready for promotion now, in the near term, or not yet? What is the concrete evidence?"
+          - "What specific behaviors or achievements are still needed before they meet the next-level bar?"
+          - "Has the employee been given sufficient opportunity to demonstrate next-level scope and impact?"
+          - "How does this employee's readiness compare to the calibrated promotion bar in this org?"
+      TQ-04.3:
+        name: Individual Development Plan
+        dqs:
+          - "Is there a documented Individual Development Plan for this employee with clear objectives?"
+          - "Are development goals specific, measurable, achievable, relevant, and time-bound?"
+          - "What stretch assignments or learning opportunities will be created to support their growth?"
+          - "Who is accountable for the development plan — manager, employee, or shared ownership?"
+
+  BQ-05:
+    name: Compensation & Recognition
+    question: Is the employee's total compensation and recognition aligned with their contributions and market?
+    tqs:
+      TQ-05.1:
+        name: Compensation Alignment
+        dqs:
+          - "Is the employee's base salary within the appropriate band for their level and performance rating?"
+          - "Has compensation kept pace with inflation, market rates, and any increase in scope or responsibility?"
+          - "Are there equity, bonus, or benefits elements that need refreshing or re-evaluation?"
+          - "Is there a meaningful retention risk due to compensation falling below the market rate?"
+      TQ-05.2:
+        name: Performance Rating & Calibration
+        dqs:
+          - "What is the proposed performance rating for this cycle, and what evidence supports it?"
+          - "Has the rating been calibrated against peers at the same level to ensure consistency?"
+          - "Are there potential biases — recency, affinity, or halo effect — that could have skewed the rating?"
+          - "How and by whom will the rating and compensation outcome be communicated to the employee?"
+      TQ-05.3:
+        name: Recognition & Engagement
+        dqs:
+          - "Does the employee feel recognized for their contributions? What signals or evidence support that view?"
+          - "Are there non-monetary forms of recognition that would be meaningful to this specific employee?"
+          - "Is the employee motivated and engaged — what are the behavioral and attitudinal indicators?"
+          - "Are there retention concerns? What would it take to keep this employee long-term?"
+
+  BQ-06:
+    name: Action Planning & Commitments
+    question: What concrete actions will be taken by both manager and employee as a result of this review?
+    tqs:
+      TQ-06.1:
+        name: Manager Commitments
+        dqs:
+          - "What specific actions will the manager take to support this employee's growth in the next cycle?"
+          - "What coaching cadence, feedback frequency, or sponsorship has the manager committed to providing?"
+          - "Are there structural changes — scope, team composition, project assignments — the manager will make?"
+          - "When will the manager follow up on each commitment, and how will accountability be maintained?"
+      TQ-06.2:
+        name: Employee Commitments
+        dqs:
+          - "What development actions has the employee committed to for the next review period?"
+          - "What specific behaviors will the employee change, adopt, or sustain going forward?"
+          - "What milestones or checkpoints will be used to measure progress between review cycles?"
+          - "Does the employee understand and genuinely agree with the feedback and the action plan?"
+      TQ-06.3:
+        name: Review Cycle & Continuity
+        dqs:
+          - "When is the next formal performance check-in scheduled, and who owns booking it?"
+          - "Are goals for the next review cycle already set, documented, and agreed upon by both parties?"
+          - "Is there a mechanism to capture mid-cycle feedback so the next review is evidence-based?"
+          - "Have all commitments been documented and made accessible to both manager and employee?"
