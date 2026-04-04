@@ -247,10 +247,10 @@ questions:
           - "Are alerts actionable? Do they include enough context to investigate without log diving?"
           - "Is there an on-call rotation or designated responder for security alerts?"
       TQ-07.3:
-        name: Breach Notification
+        name: Incident Response & Breach Notification
         dqs:
-          - "Is there a documented incident response plan that references audit logs?"
-          - "Can you determine the blast radius of a breach from audit logs? (what data was accessed, by whom, when)"
+          - "Does the system have an automated playbook for responding to security incidents based on audit log analysis?"
+          - "Can forensic reports be generated quickly to assess the impact and timeline of security incidents?"
           - "Does the system meet notification timelines? (GDPR: 72h, HIPAA: 60 days, state laws: varies)"
           - "Is there a pre-built query or report for 'all actions by user X in time range Y'?"
           - "Has the breach notification process been tested with a tabletop exercise?"
