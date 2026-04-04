@@ -5,6 +5,7 @@
 name: Compliance Audit
 id: audit
 version: "1.0.0"
+# reviewed: 2026-04-04
 description: >
   Evaluates an application's audit logging, compliance posture, and evidence
   readiness across multiple frameworks (SOC 2, HIPAA, PCI DSS, GDPR, ISO 27001).
