@@ -12,8 +12,8 @@ description: >
   and action planning. Every assessment concludes with concrete commitments and timelines.
 
 triage_presets:
-  goals-only:    [BQ-01]
-  strengths:     [BQ-02]
+  goals:         [BQ-01]
+  strengths-only: [BQ-02]
   development:   [BQ-03]
   quick:         [BQ-01, BQ-02, BQ-03]
   growth:        [BQ-03, BQ-04]
