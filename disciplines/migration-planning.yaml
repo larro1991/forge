@@ -14,7 +14,8 @@ triage_presets:
   discovery:     [BQ-01, BQ-02]
   data-focus:    [BQ-03]
   cutover-plan:  [BQ-04, BQ-06]
-  risk-review:   [BQ-05, BQ-06]
+  risk-review:   [BQ-05, BQ-06, BQ-08]
+  lessons-learned: [BQ-08]
   quick:         [BQ-01, BQ-03, BQ-05]
 
 questions:
@@ -216,3 +217,32 @@ questions:
           - "Are backups running on the target? Has restore been tested?"
           - "Is the on-call team trained on the target system?"
           - "Has the source system been decommissioned? If not, what is the decommission plan?"
+
+  BQ-08:
+    name: Lessons Learned
+    question: What did you learn, and how do you make the next migration better?
+    tqs:
+      TQ-08.1:
+        name: Migration Retrospective
+        dqs:
+          - "What went according to plan during the migration?"
+          - "What surprised the team that wasn't anticipated in planning?"
+          - "What took longer than expected, and why?"
+          - "What tooling or automation was missing that would have helped?"
+          - "What would you do differently if you ran this migration again?"
+      TQ-08.2:
+        name: Knowledge Capture
+        dqs:
+          - "Are migration runbooks updated with the actual steps taken (not just the planned steps)?"
+          - "Are data transformation scripts archived and documented for future reference?"
+          - "Are rollback learnings documented — what worked, what didn't, what was never tested?"
+          - "Have monitoring improvements been identified based on what was missed or noisy?"
+          - "Is there a migration playbook for the next time this type of migration happens?"
+      TQ-08.3:
+        name: Process Improvements
+        dqs:
+          - "What gates or checkpoints should be added or removed from the migration process?"
+          - "Were estimates accurate — time, effort, risk? Where were the biggest misses?"
+          - "What communication gaps existed during cutover or the transition period?"
+          - "Should the team invest in migration tooling or automation? What would have the highest ROI?"
+          - "What organizational changes would make the next migration smoother?"
