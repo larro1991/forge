@@ -1,0 +1,191 @@
+# FORGE Discipline: Performance Review
+# Structured evaluation of system and application performance.
+# Covers profiling, bottleneck identification, and optimization planning.
+# Every finding links to a measurable improvement target.
+
+name: Performance Review
+id: performance-review
+version: "1.0.0"
+description: >
+  Systematic performance review. Establishes baselines, identifies bottlenecks,
+  traces resource contention, and designs targeted optimizations.
+  Every improvement is scoped, prioritized, and tied to a measurable target.
+
+triage_presets:
+  baseline:     [BQ-01]
+  bottlenecks:  [BQ-02, BQ-03]
+  resources:    [BQ-03, BQ-04]
+  quick:        [BQ-01, BQ-02, BQ-05]
+  full:         [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06]
+
+questions:
+  BQ-01:
+    name: Baseline & Targets
+    question: What does performance look like now, and what does "good" look like?
+    tqs:
+      TQ-01.1:
+        name: Current Baselines
+        dqs:
+          - "What are the current p50, p95, and p99 latencies for critical paths?"
+          - "What is the current throughput (requests/sec, jobs/sec) under typical load?"
+          - "What is the current error rate under typical load?"
+          - "What is the current CPU and memory utilization under typical load?"
+          - "Are these baselines measured from production, staging, or synthetic tests?"
+      TQ-01.2:
+        name: Performance Targets
+        dqs:
+          - "What are the target latency SLOs (p50, p95, p99)?"
+          - "What is the target throughput for peak load scenarios?"
+          - "What is the maximum acceptable error rate?"
+          - "Are targets defined by SLA, user research, or internal requirements?"
+          - "Which targets are currently being violated? By how much?"
+      TQ-01.3:
+        name: Measurement Methodology
+        dqs:
+          - "How is performance currently measured? (APM, synthetic, load tests, RUM)"
+          - "Are measurements representative of real user traffic patterns?"
+          - "What is the measurement frequency? (continuous vs. on-demand)"
+          - "Are there gaps in coverage? (endpoints, user flows, batch jobs)"
+
+  BQ-02:
+    name: Bottleneck Identification
+    question: Where is time being spent, and what is the limiting factor?
+    tqs:
+      TQ-02.1:
+        name: Profiling Analysis
+        dqs:
+          - "Has CPU profiling been run on the hot path? What are the top time consumers?"
+          - "Has memory profiling been run? Are there allocation hotspots or leaks?"
+          - "Has I/O profiling been run? Are there blocking reads/writes?"
+          - "What does distributed tracing show for end-to-end latency breakdown?"
+          - "Are flame graphs or call graphs available for the critical paths?"
+      TQ-02.2:
+        name: Dependency Latency
+        dqs:
+          - "What are the latencies for each external dependency? (DB, cache, APIs, queues)"
+          - "Which dependency contributes the most to end-to-end latency?"
+          - "Are dependency calls made serially when they could be parallel?"
+          - "Are there N+1 query patterns or repeated round trips?"
+          - "What is the connection pool utilization for each dependency?"
+      TQ-02.3:
+        name: Critical Path Analysis
+        dqs:
+          - "What is the critical path for the slowest user-facing operations?"
+          - "Are there synchronous operations that could be deferred or async?"
+          - "What percentage of total latency is accounted for by each step?"
+          - "Are there any steps that are consistently slow vs. occasionally slow?"
+
+  BQ-03:
+    name: Resource Utilization
+    question: Are resources being used efficiently, and where is contention occurring?
+    tqs:
+      TQ-03.1:
+        name: Compute Resources
+        dqs:
+          - "What is peak CPU utilization? Is any instance hitting 100%?"
+          - "What is memory utilization? Are there OOM events or GC pressure?"
+          - "Are there CPU-bound operations that could be offloaded or parallelized?"
+          - "Is the work distributed evenly across instances? (CPU steal, noisy neighbors)"
+          - "Are thread pools or worker pools sized appropriately?"
+      TQ-03.2:
+        name: Storage and I/O
+        dqs:
+          - "What is disk I/O utilization? Are there I/O wait bottlenecks?"
+          - "Are database queries using indexes effectively? Are there full table scans?"
+          - "What is the cache hit rate? What is being evicted prematurely?"
+          - "Are there large object reads/writes that could be streamed or chunked?"
+          - "Is data serialization/deserialization contributing significant overhead?"
+      TQ-03.3:
+        name: Network and Concurrency
+        dqs:
+          - "What is network throughput and latency between services?"
+          - "Are there lock contention or mutex bottlenecks?"
+          - "Are there connection exhaustion issues? (DB connections, file descriptors)"
+          - "Is there excessive context switching or thread contention?"
+          - "Are batch sizes appropriate? (too small = overhead, too large = blocking)"
+
+  BQ-04:
+    name: Load Behavior
+    question: How does the system behave as load increases, and where does it degrade?
+    tqs:
+      TQ-04.1:
+        name: Scalability Profile
+        dqs:
+          - "Has load testing been performed? What load levels were tested?"
+          - "At what load does latency begin to degrade? (knee of the curve)"
+          - "At what load does the error rate begin to rise?"
+          - "Does the system scale linearly, sub-linearly, or does it collapse?"
+          - "What is the maximum throughput before the system becomes unusable?"
+      TQ-04.2:
+        name: Degradation Patterns
+        dqs:
+          - "Under high load, what degrades first? (CPU, memory, DB connections, network)"
+          - "Are there cascading failures under load? (one slow dependency backs up others)"
+          - "Are there queue buildup or backpressure issues?"
+          - "Does the system recover gracefully when load decreases after a spike?"
+          - "Are there cold start or warm-up effects that affect latency?"
+      TQ-04.3:
+        name: Capacity Planning
+        dqs:
+          - "What is the current headroom before hitting capacity limits?"
+          - "At current growth rate, when will limits be reached?"
+          - "What would a 2x or 5x traffic increase require to handle safely?"
+          - "Are autoscaling policies configured correctly? Do they react fast enough?"
+
+  BQ-05:
+    name: Optimization Opportunities
+    question: What changes would yield the greatest performance improvement per effort?
+    tqs:
+      TQ-05.1:
+        name: Quick Wins
+        dqs:
+          - "Are there obviously missing indexes on frequently queried columns?"
+          - "Is caching absent where the same data is fetched repeatedly?"
+          - "Are there synchronous network calls in request paths that could be cached or eliminated?"
+          - "Is pagination missing on queries that return unbounded result sets?"
+          - "Are there redundant computations that could be memoized?"
+      TQ-05.2:
+        name: Architectural Improvements
+        dqs:
+          - "Would moving work to async/background jobs reduce user-facing latency?"
+          - "Would a read replica or CQRS pattern reduce database contention?"
+          - "Would a CDN or edge cache reduce latency for static or cacheable content?"
+          - "Would service decomposition reduce blast radius of slow operations?"
+          - "Would data denormalization reduce expensive joins?"
+      TQ-05.3:
+        name: Optimization Backlog
+        dqs:
+          - "List each optimization candidate with: description, expected gain, effort estimate."
+          - "Which optimizations address the highest-impact bottlenecks?"
+          - "Which optimizations have the best gain-to-effort ratio?"
+          - "Are there performance improvements already identified but not yet implemented?"
+          - "Who owns each optimization item? What is the target completion date?"
+
+  BQ-06:
+    name: Observability & Regression Prevention
+    question: How will we know if performance improves or regresses?
+    tqs:
+      TQ-06.1:
+        name: Performance Monitoring
+        dqs:
+          - "Are latency histograms (p50/p95/p99) tracked and dashboarded for all critical paths?"
+          - "Are throughput and error rate dashboarded alongside latency?"
+          - "Are resource utilization metrics (CPU, memory, I/O) tracked with alerting?"
+          - "Are slow query logs or traces captured and surfaced?"
+          - "Is there a single dashboard that gives an at-a-glance performance health view?"
+      TQ-06.2:
+        name: Regression Detection
+        dqs:
+          - "Are performance benchmarks run in CI? Do they fail builds on regression?"
+          - "Are load tests run before major releases?"
+          - "Is there alerting on p95/p99 latency degradation above a threshold?"
+          - "Are deployment events annotated in dashboards to correlate with regressions?"
+          - "What is the process when a performance regression is detected in production?"
+      TQ-06.3:
+        name: Continuous Improvement
+        dqs:
+          - "Is there a recurring performance review cadence? (weekly, per-release, quarterly)"
+          - "Are performance targets reviewed and updated as the system evolves?"
+          - "Are post-optimization results measured and documented?"
+          - "Is there a process for users or operators to report perceived slowness?"
+          - "Are performance learnings shared across teams to prevent repeat patterns?"

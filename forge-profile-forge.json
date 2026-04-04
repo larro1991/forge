@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "project": "forge",
+  "created": "2026-03-23T04:26:11.592929",
+  "updated": "2026-03-23T04:26:11.592960",
+  "answers": {
+    "environment": "personal-homelab",
+    "users": "single-user",
+    "data_sensitivity": "none",
+    "architecture": "monolith",
+    "has_auth": false,
+    "has_ai_ml": false,
+    "has_database": false,
+    "has_external_apis": false
+  }
+}

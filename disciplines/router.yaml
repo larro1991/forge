@@ -1,0 +1,141 @@
+# FORGE Discipline Router
+# Maps user intent to discipline recommendations.
+# Run: forge route
+
+version: "1.0.0"
+
+intent_signals:
+  broken:
+    keywords: [broken, down, error, crash, failing, outage, incident, not working, 500, timeout, bug, fix]
+    primary: troubleshooting
+    confidence: 0.9
+
+  reviewing_code:
+    keywords: [review, PR, pull request, code change, diff, commit, merge, refactor]
+    primary: code-review
+    confidence: 0.85
+
+  designing:
+    keywords: [design, architect, plan, new system, build, scaffold, greenfield, proposal]
+    primary: architecture-review
+    confidence: 0.9
+
+  migrating:
+    keywords: [migrate, migration, move, replace, upgrade, cutover, switch from, port, replatform]
+    primary: migration-planning
+    confidence: 0.9
+
+  post_incident:
+    keywords: [postmortem, post-incident, retrospective, RCA, root cause, what went wrong, blameless]
+    primary: post-incident-review
+    confidence: 0.9
+
+  testing:
+    keywords: [test, test cases, test spec, test plan, coverage, QA, quality, regression]
+    primary: test-specification
+    confidence: 0.85
+
+  security_check:
+    keywords: [security, audit, vulnerability, pen test, hardening, pre-deploy, pre-launch, attack surface]
+    primary: security
+    confidence: 0.9
+
+  documenting:
+    keywords: [document, documentation, docs, readme, runbook, API docs, write docs, undocumented, wiki]
+    primary: documentation
+    confidence: 0.85
+
+  compliance_audit:
+    keywords: [compliance, ISO 27001, SOC 2, HIPAA, PCI DSS, GDPR, regulatory, certification, audit logging, audit trail, audit readiness, compliance audit, evidence collection]
+    primary: audit
+    confidence: 0.95
+    also: [security]
+
+  ops_review:
+    keywords: [operations, ops review, infrastructure health, resource usage, cleanup, housekeeping, efficiency, optimization, waste, idle, unused, cron, scheduled tasks, throughput, bottleneck]
+    primary: operations-review
+    confidence: 0.9
+
+  ops_tweaks:
+    keywords: [tweak, improve operations, squeeze more, tune, optimize resources, too slow, too much CPU, too much memory, disk full, logs growing]
+    primary: operations-review
+    confidence: 0.85
+
+  compliance_docs:
+    keywords: [compliance documentation, audit docs, policy document, compliance report]
+    primary: documentation
+    confidence: 0.85
+
+  performance_review:
+    keywords: [performance review, 1:1, OKR, KPI, career growth, compensation, PIP, promotion, feedback]
+    primary: performance-review
+    confidence: 0.9
+
+  full_assessment:
+    keywords: [full assessment, full review, comprehensive, everything, end to end]
+    primary: security
+    confidence: 0.8
+    also: [code-review, operations-review]
+
+decision_tree:
+  root:
+    question: "What are you trying to do?"
+    options:
+      - label: "Something is broken and I need to fix it"
+        result: [troubleshooting]
+      - label: "Reviewing code changes (PR/commit)"
+        next: code_review_detail
+      - label: "Designing a new system"
+        result: [architecture-review]
+      - label: "Planning a migration"
+        result: [migration-planning]
+      - label: "Post-incident analysis"
+        result: [post-incident-review]
+      - label: "Writing or validating tests"
+        result: [test-specification]
+      - label: "Pre-deployment security check"
+        result: [security]
+      - label: "Reviewing infrastructure health / operations"
+        next: ops_review_detail
+      - label: "Documenting the project"
+        next: documentation_detail
+      - label: "Full comprehensive assessment"
+        result: [security, code-review, operations-review]
+
+  ops_review_detail:
+    question: "What aspect of operations are you reviewing?"
+    options:
+      - label: "Resource allocation and utilization (CPU, memory, disk)"
+        result: [operations-review]
+      - label: "Monitoring gaps and alert quality"
+        result: [operations-review]
+      - label: "Scheduled tasks and automation health"
+        result: [operations-review]
+      - label: "Cleanup, housekeeping, and waste"
+        result: [operations-review]
+      - label: "Pipeline throughput and efficiency"
+        result: [operations-review]
+      - label: "Full operational health check"
+        result: [operations-review]
+
+  code_review_detail:
+    question: "Does the change touch authentication, authorization, or sensitive data?"
+    options:
+      - label: "Yes"
+        result: [code-review, security]
+      - label: "No"
+        result: [code-review]
+
+  documentation_detail:
+    question: "What kind of documentation?"
+    options:
+      - label: "General docs cleanup or README/guides"
+        result: [documentation]
+      - label: "Compliance audit (SOC 2, HIPAA, PCI, GDPR, ISO 27001)"
+        result: [audit]
+      - label: "Compliance or regulatory documentation"
+        result: [documentation]
+      - label: "API documentation"
+        result: [documentation]
+      - label: "Full docs assessment with security review"
+        result: [documentation, security]

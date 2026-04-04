@@ -1,0 +1,315 @@
+# FORGE Discipline: Operations Review
+# Proactive infrastructure health assessment. Finds waste, blind spots,
+# and efficiency gaps before they become incidents.
+
+name: Operations Review
+id: operations-review
+version: "1.0.0"
+description: >
+  Proactive assessment of running infrastructure: resource allocation,
+  monitoring health, automation efficiency, housekeeping, and cost
+  visibility. Catches the problems that don't trigger alerts — the slow
+  leaks, the no-ops, the uncapped processes, the orphaned data.
+
+triage_presets:
+  quick-health:     [BQ-01, BQ-02, BQ-05]
+  resource-audit:   [BQ-01, BQ-04, BQ-08]
+  automation-audit: [BQ-03, BQ-06]
+  full-ops:         [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06, BQ-07, BQ-08, BQ-09, BQ-10]
+  cost-review:      [BQ-08, BQ-09]
+  cleanup:          [BQ-04, BQ-07]
+
+questions:
+  BQ-01:
+    name: Resource Allocation
+    question: Are compute resources properly bounded, balanced, and utilized?
+    tqs:
+      TQ-01.1:
+        name: CPU & Memory Limits
+        dqs:
+          - "Does every long-running process have explicit CPU and memory limits? List any without."
+          - "Are hard limits (cpus) set, or only soft limits (cpu_shares/nice)? Soft limits don't prevent starvation under contention."
+          - "What is the total committed CPU across all services vs. available cores? Is the system overcommitted?"
+          - "What is the total committed memory across all services vs. available RAM?"
+          - "Which process is the biggest CPU consumer? Is that expected given its role?"
+          - "Which process is the biggest memory consumer? Is its memory limit appropriate?"
+          - "Are there OOM kills in the last 30 days? Which containers, how often?"
+      TQ-01.2:
+        name: Load Distribution
+        dqs:
+          - "What is the average system load over the past week? How does it compare to core count?"
+          - "Are there time-of-day load spikes? What causes them?"
+          - "Are background/batch processes properly deprioritized? (nice, cpu_shares, ionice)"
+          - "Is there a single process that dominates the system when active? Can it be capped?"
+      TQ-01.3:
+        name: Disk & Storage
+        dqs:
+          - "What is current disk utilization per pool/volume? Are any above 80%?"
+          - "Is disk usage trending up? At current rate, when will it hit capacity?"
+          - "Are there large files or directories that don't belong? (temp files, orphaned data, old backups)"
+          - "Are there duplicate datasets consuming unnecessary space?"
+          - "Is there unused reserved/provisioned storage that could be reclaimed?"
+
+  BQ-02:
+    name: Monitoring & Observability
+    question: Is the monitoring stack itself healthy, or are there blind spots?
+    tqs:
+      TQ-02.1:
+        name: Monitor Health
+        dqs:
+          - "Is every monitoring/alerting agent actually running and reporting? Check each one."
+          - "When was the last successful health check from each monitor? Any stale?"
+          - "Are there monitors that run but silently fail? (exit code 0 but no useful output)"
+          - "Has anyone tested that alerts actually fire? When was the last real alert?"
+          - "Is there a 'watcher of the watcher' — something that detects when monitoring itself dies?"
+      TQ-02.2:
+        name: Coverage Gaps
+        dqs:
+          - "List every running service. Does each one have a health check? Are any uncovered?"
+          - "Are health checks testing meaningful functionality, or just that the process is alive?"
+          - "Is there disk space monitoring? Does it alert before full, or only after?"
+          - "Is there certificate/credential expiry monitoring?"
+          - "Are background jobs monitored for success/failure/duration?"
+          - "Are there services that only get noticed when a user complains? (no proactive detection)"
+      TQ-02.3:
+        name: Alert Quality
+        dqs:
+          - "How many alerts fired in the last 30 days? How many were actionable?"
+          - "Are there noisy alerts that get ignored? (alert fatigue)"
+          - "Are alerts deduplicated? Or does one failure generate a storm?"
+          - "Do alerts include enough context to act on? (what failed, what to check, what to do)"
+          - "Is there an escalation path? What happens if an alert goes unacknowledged?"
+
+  BQ-03:
+    name: Scheduled Tasks & Automation
+    question: Are automated tasks running correctly, efficiently, and without conflict?
+    tqs:
+      TQ-03.1:
+        name: Task Inventory
+        dqs:
+          - "List all scheduled tasks (cron, systemd timers, in-app schedulers). How many total?"
+          - "Are scheduled tasks registered in one place, or scattered across crontabs, dispatchers, and app code?"
+          - "Are there tasks registered in multiple places? (duplicate execution risk)"
+          - "Are there enabled tasks that have never run? What's blocking them?"
+          - "Are there disabled tasks that should be cleaned up or removed?"
+      TQ-03.2:
+        name: Task Health
+        dqs:
+          - "Which scheduled tasks have failed recently? What were the errors?"
+          - "Are there tasks that run but do nothing? (no-ops consuming cycles)"
+          - "Are task success/failure outcomes logged and monitored?"
+          - "What happens when a task fails? Is it retried, alerted, or silently dropped?"
+          - "Are there tasks that hang or run longer than expected? Are there timeouts?"
+      TQ-03.3:
+        name: Scheduling Conflicts
+        dqs:
+          - "Are there time windows where multiple heavy tasks overlap? (I/O, CPU, or network contention)"
+          - "Could heavy tasks be staggered to avoid peak contention?"
+          - "Are task schedules documented, or do you need to grep crontabs to find them?"
+          - "Is there a visual timeline of scheduled tasks to identify overlaps?"
+      TQ-03.4:
+        name: Automation Gaps
+        dqs:
+          - "What manual tasks are performed regularly that could be automated?"
+          - "Are there 'fire and forget' processes that no one checks on?"
+          - "Is there a runbook for common manual interventions? Could any be scripted?"
+
+  BQ-04:
+    name: Housekeeping & Cleanup
+    question: Is there automated cleanup, or is waste accumulating silently?
+    tqs:
+      TQ-04.1:
+        name: Container/Image Hygiene
+        dqs:
+          - "Are dangling Docker images cleaned up automatically? How much space are they using?"
+          - "Is there a scheduled image prune or janitor process?"
+          - "Are old/unused images retained? Is there a retention policy?"
+          - "Are stopped containers cleaned up, or do they accumulate?"
+          - "Are unused Docker volumes identified and removed? How much space do they hold?"
+          - "Are unused Docker networks cleaned up?"
+      TQ-04.2:
+        name: Log Management
+        dqs:
+          - "Is there log rotation configured for all services? (daemon-level, app-level, or both)"
+          - "What is the current total log disk usage? Which service has the largest logs?"
+          - "Are there logs growing without bound? (no max-size, no rotation)"
+          - "Are logs being shipped to a central location, or only stored locally?"
+          - "Is there a log retention policy? Are old logs automatically purged?"
+      TQ-04.3:
+        name: Database Hygiene
+        dqs:
+          - "Are large/growing tables identified? What are the top 5 by size?"
+          - "Is there row archival or pruning for append-only tables? (audit logs, events, metrics)"
+          - "When was the last VACUUM/ANALYZE or equivalent maintenance?"
+          - "Are there orphaned rows, dead references, or unused tables?"
+          - "Is database size monitored? Is there a growth trend and projected capacity?"
+      TQ-04.4:
+        name: File System Hygiene
+        dqs:
+          - "Are there orphaned files — data not referenced by any running service?"
+          - "Are temporary directories cleaned up automatically?"
+          - "Are old backups/snapshots pruned according to a retention policy?"
+          - "Are staging/intake directories monitored for files that never got processed?"
+          - "Is there a scheduled filesystem audit or du report?"
+
+  BQ-05:
+    name: Service Configuration
+    question: Are services configured consistently and correctly?
+    tqs:
+      TQ-05.1:
+        name: Container Configuration
+        dqs:
+          - "Do all containers have restart policies? Are they appropriate? (always, unless-stopped, on-failure)"
+          - "Do all containers have health checks defined?"
+          - "Are container environment variables consistent across compose files? (no conflicting ports, names)"
+          - "Are volume mounts correct? Are any mounting stale or wrong host paths?"
+          - "Are containers pinned to specific image versions, or using :latest?"
+      TQ-05.2:
+        name: Configuration Drift
+        dqs:
+          - "Are running container configs in sync with compose files? (docker inspect vs. compose)"
+          - "Are host-side files in sync with what's baked into container images?"
+          - "Are there manual container patches that haven't been persisted to source?"
+          - "Is there a single source of truth for each service's config? Or is config scattered?"
+      TQ-05.3:
+        name: Network Configuration
+        dqs:
+          - "Are container networks properly segmented? Or can everything reach everything?"
+          - "Are only necessary ports exposed to the host?"
+          - "Are there orphaned networks from stopped/removed stacks?"
+          - "Is DNS resolution working correctly between containers?"
+
+  BQ-06:
+    name: Pipeline & Throughput
+    question: Are processing pipelines moving data efficiently?
+    tqs:
+      TQ-06.1:
+        name: Queue Health
+        dqs:
+          - "What is the current queue depth for each pipeline? Is it growing, stable, or draining?"
+          - "What is the average processing rate? Has it changed recently?"
+          - "Are there items stuck in the queue? For how long?"
+          - "Is there backpressure handling? What happens when the queue is full?"
+      TQ-06.2:
+        name: Worker Efficiency
+        dqs:
+          - "Are workers idle? What percentage of time are they actively processing vs. waiting?"
+          - "Are workers scanning for work too frequently? (polling empty dirs, idle loops)"
+          - "Could worker intervals be adjusted based on actual workload?"
+          - "Are there workers processing the same items redundantly?"
+      TQ-06.3:
+        name: Throughput Optimization
+        dqs:
+          - "What is the bottleneck in each pipeline? (CPU, I/O, network, external dependency)"
+          - "Could processing settings be tuned for better throughput? (batch size, parallelism, codec presets)"
+          - "Are there low-hanging optimizations — settings that trade minimal quality for significant speed?"
+          - "Is throughput monitored and trended? Would you notice a 50% drop?"
+      TQ-06.4:
+        name: Error Handling
+        dqs:
+          - "What happens when a pipeline item fails? Retry, skip, or block the queue?"
+          - "Are failed items logged with enough context to diagnose?"
+          - "Is there a dead-letter queue or poison-pill handler?"
+          - "Are transient failures (network blip, timeout) distinguished from permanent ones (corrupt file)?"
+
+  BQ-07:
+    name: Data Lifecycle
+    question: Is data created, moved, archived, and deleted intentionally?
+    tqs:
+      TQ-07.1:
+        name: Orphaned Data
+        dqs:
+          - "Are there files/directories not referenced by any service? How much space?"
+          - "Are there database records with no corresponding files, or files with no DB records?"
+          - "Are staging/temp directories accumulating unprocessed items?"
+          - "Is there a process to detect and report orphaned data?"
+      TQ-07.2:
+        name: Backup & Snapshot Hygiene
+        dqs:
+          - "Are backups running on schedule? When was the last successful backup?"
+          - "Are snapshots being pruned according to retention policy?"
+          - "Has a backup restore been tested recently? When?"
+          - "Is backup storage usage monitored? Is it growing faster than expected?"
+      TQ-07.3:
+        name: Archival & Retention
+        dqs:
+          - "Is there a defined retention policy for each data type?"
+          - "Are old records archived or purged automatically?"
+          - "Is archival tested? Can archived data be restored when needed?"
+
+  BQ-08:
+    name: Cost & Usage Visibility
+    question: Do you know what you're spending and where the budget is going?
+    tqs:
+      TQ-08.1:
+        name: API & Service Costs
+        dqs:
+          - "Are API calls tracked with token/unit counts? (LLM tokens, API calls, bandwidth)"
+          - "Is cost data recorded in a queryable store, or only in provider dashboards?"
+          - "Do you have alerts for unusual cost spikes?"
+          - "Are there API calls that could be reduced, cached, or batched?"
+          - "Are provider spend limits configured to prevent runaway costs?"
+      TQ-08.2:
+        name: Resource Utilization
+        dqs:
+          - "Which services are over-provisioned? (allocated resources >> actual usage)"
+          - "Which services are under-provisioned? (actual usage near limits)"
+          - "Are there services running 24/7 that could be on-demand or scheduled?"
+          - "Is there visibility into per-service resource consumption over time?"
+      TQ-08.3:
+        name: License & Subscription
+        dqs:
+          - "Are there active subscriptions for unused services?"
+          - "Are trial periods being tracked? Any about to expire or auto-renew?"
+          - "Are there cheaper alternatives for current paid services?"
+
+  BQ-09:
+    name: Dependency & Provider Health
+    question: Are external dependencies healthy, monitored, and replaceable?
+    tqs:
+      TQ-09.1:
+        name: Provider Status
+        dqs:
+          - "List all external providers/APIs the system depends on. What is each one's current status?"
+          - "Are provider health endpoints checked automatically?"
+          - "Are there providers with recurring issues? What's the pattern?"
+          - "Is there a fallback or degraded mode when a provider is down?"
+      TQ-09.2:
+        name: Credential Lifecycle
+        dqs:
+          - "Are there API keys, tokens, or certificates approaching expiry?"
+          - "Is credential rotation automated or manual? When was the last rotation?"
+          - "Are credentials stored securely? (env vars, secrets manager — not hardcoded)"
+          - "Is there a single inventory of all credentials and their expiry dates?"
+      TQ-09.3:
+        name: Vendor Lock-in
+        dqs:
+          - "Which providers would be hardest to replace? Why?"
+          - "Are there abstraction layers that would ease provider migration?"
+          - "Are you using provider-specific features that reduce portability?"
+
+  BQ-10:
+    name: Resilience & Recovery
+    question: What happens when things go wrong? Can the system self-heal?
+    tqs:
+      TQ-10.1:
+        name: Self-Healing
+        dqs:
+          - "Which services can auto-recover from common failures? (restart policies, circuit breakers, retries)"
+          - "Which failures require manual intervention? Could any be automated?"
+          - "Are self-healing actions logged so you know they happened?"
+          - "Is there a cap on self-healing retries? (prevent infinite restart loops)"
+      TQ-10.2:
+        name: Disaster Recovery
+        dqs:
+          - "What is the recovery procedure if the host machine fails?"
+          - "How long would it take to rebuild the entire stack from scratch?"
+          - "Are compose files, configs, and scripts backed up and version-controlled?"
+          - "Has the recovery procedure been tested? When?"
+      TQ-10.3:
+        name: Single Points of Failure
+        dqs:
+          - "What breaks if the database goes down? Is there a replica?"
+          - "What breaks if DNS fails? Are there hardcoded fallback IPs where needed?"
+          - "What breaks if the host runs out of disk? Is there early warning?"
+          - "Is there any service whose failure cascades to take down multiple others?"

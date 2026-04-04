@@ -1,0 +1,13 @@
+{
+  "project": "orchestrator",
+  "environment": "personal-homelab",
+  "users": "single-user",
+  "data_sensitivity": "none",
+  "architecture": "script",
+  "has_auth": false,
+  "has_ai_ml": false,
+  "has_database": false,
+  "has_external_apis": true,
+  "has_multi_tenant": false,
+  "compliance_target": "none"
+}

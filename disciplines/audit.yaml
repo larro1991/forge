@@ -1,0 +1,355 @@
+# FORGE Discipline: Compliance Audit
+# Systematic audit-readiness assessment across compliance frameworks.
+# 10 BQs, tiered presets from personal projects to enterprise compliance.
+
+name: Compliance Audit
+id: audit
+version: "1.0.0"
+description: >
+  Evaluates an application's audit logging, compliance posture, and evidence
+  readiness across multiple frameworks (SOC 2, HIPAA, PCI DSS, GDPR, ISO 27001).
+  Tiered presets allow lightweight checks for personal projects and deep assessments
+  for enterprise SaaS. Designed to surface gaps before an auditor does.
+
+triage_presets:
+  basic:      [BQ-01, BQ-03]
+  startup:    [BQ-01, BQ-03, BQ-05, BQ-07]
+  soc2:       [BQ-01, BQ-02, BQ-03, BQ-05, BQ-06, BQ-07, BQ-10]
+  hipaa:      [BQ-01, BQ-02, BQ-03, BQ-04, BQ-07, BQ-09]
+  pci-dss:    [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06, BQ-07]
+  gdpr:       [BQ-01, BQ-03, BQ-04, BQ-09]
+  enterprise: [BQ-01, BQ-02, BQ-03, BQ-04, BQ-05, BQ-06, BQ-07, BQ-08, BQ-09, BQ-10]
+
+questions:
+  BQ-01:
+    name: Audit Trail Coverage
+    question: What events are logged and what falls through the cracks?
+    tqs:
+      TQ-01.1:
+        name: Event Catalog
+        dqs:
+          - "Is there a defined list of auditable events? Where is it documented?"
+          - "Are all authentication events logged? (login, logout, failed login, password reset, MFA challenge)"
+          - "Are all authorization events logged? (access granted, access denied, permission check failures)"
+          - "Are all data mutations logged? (create, update, delete on business entities)"
+          - "Are administrative actions logged? (user management, config changes, feature toggles)"
+          - "Are financial/billing events logged? (charges, refunds, plan changes, invoice generation)"
+      TQ-01.2:
+        name: Coverage Gaps
+        dqs:
+          - "For each API endpoint or route — does it produce an audit event? List any that don't."
+          - "Are bulk operations logged individually or as a single event? (batch deletes, imports)"
+          - "Are background jobs and cron tasks audited? (scheduled runs, automated actions)"
+          - "Are webhook deliveries and third-party callbacks logged?"
+          - "Are there any 'fire and forget' operations that bypass the audit path?"
+          - "What percentage of write operations are covered by audit logging? How is this measured?"
+      TQ-01.3:
+        name: Event Schema
+        dqs:
+          - "Is there a consistent schema for audit events? (timestamp, actor, action, resource, outcome)"
+          - "Does every event include: who (actor ID), what (action), which (resource ID), when (timestamp), where (IP/session), why (context)?"
+          - "Are timestamps UTC with timezone info? What precision? (second, millisecond, microsecond)"
+          - "Is the event schema versioned? What happens when it changes?"
+          - "Are events structured (JSON, protobuf) or unstructured (log lines)? Can they be queried?"
+      TQ-01.4:
+        name: Audit Middleware
+        dqs:
+          - "Is audit logging automatic (middleware/decorator) or manual (each route calls log_event)?"
+          - "If manual — what prevents a developer from forgetting to add it to a new endpoint?"
+          - "If automatic — can it be bypassed? Are there exclusion rules? Who controls them?"
+          - "Is there a linter, test, or CI check that verifies audit coverage on new endpoints?"
+          - "Does the audit middleware capture the request context (user, IP, session) automatically?"
+
+  BQ-02:
+    name: Log Integrity & Tamper Protection
+    question: Can audit logs be altered, deleted, or forged after the fact?
+    tqs:
+      TQ-02.1:
+        name: Immutability
+        dqs:
+          - "Are audit log entries append-only? Can any user (including admins) update or delete them?"
+          - "Is the audit log stored in a separate data store from the application database?"
+          - "Are there database triggers, policies, or application guards preventing audit record deletion?"
+          - "If using a table — are DELETE and UPDATE permissions revoked for the application user?"
+          - "Has anyone tested whether an admin can tamper with audit logs? What happened?"
+      TQ-02.2:
+        name: Transport Security
+        dqs:
+          - "How are audit events transmitted from the application to storage? (direct write, queue, syslog, API)"
+          - "Is the transport encrypted? (TLS, mTLS, encrypted queue)"
+          - "What happens if the audit log destination is unavailable? Are events queued, dropped, or does the operation fail?"
+          - "Is there a dead letter queue or fallback for failed audit writes?"
+          - "Can audit events be replayed or deduplicated if transport fails and retries?"
+      TQ-02.3:
+        name: Storage & Backup
+        dqs:
+          - "Where are audit logs stored? (same DB, separate DB, object storage, SIEM, third-party service)"
+          - "Are audit logs backed up independently of the application database?"
+          - "What is the backup retention for audit logs specifically? Does it meet compliance requirements?"
+          - "Are backups encrypted at rest? Who holds the encryption keys?"
+          - "Can you restore audit logs from backup and verify integrity? Has this been tested?"
+
+  BQ-03:
+    name: Identity & Attribution
+    question: Can every action be traced back to a specific actor with certainty?
+    tqs:
+      TQ-03.1:
+        name: User Identity
+        dqs:
+          - "Does every audit event include the authenticated user's unique ID (not just username/email)?"
+          - "How are anonymous or unauthenticated actions attributed? (IP, session, device fingerprint)"
+          - "If the system supports 'act as' or impersonation — are both the real user and impersonated user recorded?"
+          - "Are service accounts and API keys identified separately from human users?"
+          - "For multi-tenant systems — is the tenant/organization ID included in every audit event?"
+      TQ-03.2:
+        name: Request Tracing
+        dqs:
+          - "Does each request get a unique correlation/trace ID that appears in all related audit events?"
+          - "Can you reconstruct the full sequence of actions from a single user session?"
+          - "Are trace IDs propagated across service boundaries? (distributed tracing)"
+          - "Do audit events include the originating IP address and user agent?"
+          - "Is the session ID or token identifier included for post-incident session analysis?"
+      TQ-03.3:
+        name: Service-to-Service Identity
+        dqs:
+          - "When one service calls another — is the calling service identified in the audit log?"
+          - "Are machine-to-machine credentials (service accounts, API keys) rotated and tracked?"
+          - "If an automated process performs an action — can you trace it back to the triggering user or event?"
+          - "Are cron jobs, background workers, and queue consumers identified with a system actor ID?"
+      TQ-03.4:
+        name: Non-Repudiation
+        dqs:
+          - "For critical actions (financial, legal, access grants) — is there enough evidence that the actor cannot deny performing them?"
+          - "Are audit events cryptographically signed or hashed?"
+          - "Is there a chain of custody for evidence? (event → transport → storage → retrieval)"
+          - "For API-based actions — is the original request (or a hash of it) stored alongside the audit event?"
+
+  BQ-04:
+    name: Data Classification & Privacy
+    question: Is sensitive data identified, labeled, and handled according to its classification?
+    tqs:
+      TQ-04.1:
+        name: Classification Scheme
+        dqs:
+          - "Is there a defined data classification system? (e.g., public, internal, confidential, restricted)"
+          - "Are all data fields/columns classified? Is the classification documented in the schema or a data dictionary?"
+          - "Is classification enforced in code? (decorators, field metadata, ORM annotations)"
+          - "Who is responsible for classifying new data fields when they're added?"
+          - "Is there a periodic review of data classifications? When was the last one?"
+      TQ-04.2:
+        name: PII & PHI Handling
+        dqs:
+          - "What personally identifiable information (PII) does the system collect? List every field."
+          - "What protected health information (PHI) does the system process, if any?"
+          - "Is PII/PHI encrypted at rest? Which algorithm and key length?"
+          - "Is PII/PHI encrypted in transit? (field-level, not just TLS)"
+          - "Are PII fields masked or redacted in audit logs? (e.g., email → j***@example.com)"
+          - "Can you produce a report of all PII stored for a specific user? (data subject access request)"
+      TQ-04.3:
+        name: Data Minimization in Logs
+        dqs:
+          - "Do audit logs contain the minimum data needed? Are full request/response bodies stored?"
+          - "Are sensitive fields (passwords, tokens, SSNs, credit cards) scrubbed before logging?"
+          - "Is there an allowlist or denylist for fields that can appear in audit logs?"
+          - "Has anyone tested whether sensitive data leaks into logs? (grep for patterns, pentest)"
+          - "Are log aggregation/search tools access-controlled to prevent unauthorized PII exposure?"
+      TQ-04.4:
+        name: Data Residency & Cross-Border
+        dqs:
+          - "Where is data physically stored? Which jurisdictions?"
+          - "Do audit logs stay in the same jurisdiction as the data they describe?"
+          - "If using cloud services — are regions configured to meet residency requirements?"
+          - "Are there data processing agreements (DPAs) with all third parties that receive audit data?"
+
+  BQ-05:
+    name: Access Control Audit
+    question: Are privilege changes, role mutations, and access decisions tracked?
+    tqs:
+      TQ-05.1:
+        name: Privilege Escalation Tracking
+        dqs:
+          - "Are all role assignments and removals logged? (user X granted admin, user Y removed from team)"
+          - "Are permission changes logged at the granular level? (not just 'role changed' but which permissions changed)"
+          - "Is there a before/after snapshot for every access control change?"
+          - "Who can modify roles and permissions? Is that access itself audited?"
+          - "Are temporary elevated privileges (break-glass, emergency access) tracked with start/end times?"
+      TQ-05.2:
+        name: Admin Action Logging
+        dqs:
+          - "Are all admin panel actions logged separately from regular user actions?"
+          - "Can admin actions be filtered and reviewed independently? (admin audit report)"
+          - "Are admin sessions recorded or at least fully attributed?"
+          - "Is there a four-eyes / dual-approval requirement for destructive admin actions?"
+          - "Can an admin disable their own audit logging? Has this been tested?"
+      TQ-05.3:
+        name: Failed Access Attempts
+        dqs:
+          - "Are failed login attempts logged with: username attempted, IP, timestamp, failure reason?"
+          - "Are authorization failures logged? (user tried to access resource X but was denied)"
+          - "Is there rate limiting or lockout on repeated failures? Are lockout events logged?"
+          - "Are brute-force patterns detectable from the audit log? (same IP, same user, velocity)"
+          - "Is there an alert threshold for failed access attempts? What is it?"
+      TQ-05.4:
+        name: API Key & Token Lifecycle
+        dqs:
+          - "Are API key creation, rotation, and revocation events logged?"
+          - "Are OAuth token grants, refreshes, and revocations logged?"
+          - "When a token is used — is the token identifier (not the secret) recorded in the audit event?"
+          - "Are expired or revoked tokens still being used? Can you detect this from audit logs?"
+
+  BQ-06:
+    name: Change Management
+    question: Are configuration changes, deployments, and schema migrations tracked?
+    tqs:
+      TQ-06.1:
+        name: Configuration Changes
+        dqs:
+          - "Are application configuration changes logged? (feature flags, environment variables, settings)"
+          - "Is there a before/after diff for configuration changes?"
+          - "Who changed the configuration? When? Why? Is the change linked to a ticket or approval?"
+          - "Are infrastructure configuration changes tracked? (firewall rules, DNS, load balancer)"
+          - "Can you reconstruct the application's configuration at any point in time from the audit trail?"
+      TQ-06.2:
+        name: Schema & Data Migrations
+        dqs:
+          - "Are database schema migrations logged with: who ran it, when, what changed, was it reversible?"
+          - "Are data migrations (backfills, transforms) logged separately from schema changes?"
+          - "Is there a migration history that can be audited? (not just 'last applied')"
+          - "Are failed migrations logged with the error and the state the database was left in?"
+      TQ-06.3:
+        name: Deployment Tracking
+        dqs:
+          - "Is every deployment logged with: who deployed, what version, when, to which environment?"
+          - "Are rollbacks logged as distinct events from forward deployments?"
+          - "Is the deployment pipeline itself audited? (who approved, CI/CD job ID, artifact hash)"
+          - "Can you correlate an incident to the specific deployment that caused it?"
+          - "Are container image digests or build artifact hashes recorded at deployment time?"
+
+  BQ-07:
+    name: Incident Detection & Response
+    question: Can the system detect, alert on, and support investigation of security events?
+    tqs:
+      TQ-07.1:
+        name: Anomaly Detection
+        dqs:
+          - "Is there automated analysis of audit logs for anomalous patterns? (unusual access times, volumes, locations)"
+          - "Are baseline user behavior profiles established for comparison?"
+          - "Is there detection for: impossible travel, credential stuffing, privilege abuse, data exfiltration?"
+          - "How quickly can an anomaly be detected? (real-time, minutes, hours, daily batch)"
+          - "What is the false positive rate? How is it tuned?"
+      TQ-07.2:
+        name: Alerting & Escalation
+        dqs:
+          - "Are security-relevant audit events forwarded to an alerting system? (SIEM, PagerDuty, Discord)"
+          - "Is there a defined severity matrix for audit events? (info, warning, critical)"
+          - "What is the escalation path when a critical audit event is detected?"
+          - "Are alerts actionable? Do they include enough context to investigate without log diving?"
+          - "Is there an on-call rotation or designated responder for security alerts?"
+      TQ-07.3:
+        name: Breach Notification
+        dqs:
+          - "Is there a documented incident response plan that references audit logs?"
+          - "Can you determine the blast radius of a breach from audit logs? (what data was accessed, by whom, when)"
+          - "Does the system meet notification timelines? (GDPR: 72h, HIPAA: 60 days, state laws: varies)"
+          - "Is there a pre-built query or report for 'all actions by user X in time range Y'?"
+          - "Has the breach notification process been tested with a tabletop exercise?"
+      TQ-07.4:
+        name: Forensic Readiness
+        dqs:
+          - "Can you reconstruct a complete timeline of events for a specific user, resource, or time range?"
+          - "Are audit logs searchable and queryable? What tools are used? (SQL, ELK, Splunk, CloudWatch)"
+          - "Is there a chain of custody process for audit evidence used in investigations?"
+          - "Are audit logs admissible as evidence? (tamper-evident, timestamped, attributed)"
+          - "How long does it take to pull a forensic report? Can it be done under pressure during an incident?"
+
+  BQ-08:
+    name: Third-Party & AI Accountability
+    question: Are vendor interactions, API calls, and AI decisions tracked?
+    tqs:
+      TQ-08.1:
+        name: Vendor & Integration Audit
+        dqs:
+          - "Are all outbound API calls to third-party services logged? (what was sent, what was received, when)"
+          - "Is vendor access to your system logged? (support sessions, API key usage, data exports)"
+          - "Are third-party webhook payloads logged on receipt?"
+          - "Do vendor SLAs include audit log provisions? Can you audit their access to your data?"
+          - "Are data sharing agreements in place for every third party that receives user data?"
+      TQ-08.2:
+        name: AI Input/Output Capture
+        dqs:
+          - "Are AI/LLM API calls logged with: input prompt (or hash), output response (or hash), model used, token count?"
+          - "Are AI-generated decisions that affect users logged? (recommendations, approvals, content moderation)"
+          - "Is there a human-in-the-loop audit trail for AI decisions? (who reviewed, who overrode)"
+          - "Can a user request an explanation of an AI decision made about them? Is the data available?"
+          - "Are model versions and parameters recorded so decisions can be reproduced or investigated?"
+      TQ-08.3:
+        name: Automated Action Audit
+        dqs:
+          - "Are automated actions (auto-remediation, auto-scaling, scheduled tasks) logged with their trigger?"
+          - "Can you distinguish between human-initiated and machine-initiated actions in the audit log?"
+          - "Are automated escalation and notification decisions logged?"
+          - "If an AI agent takes an action — is the full reasoning chain or decision context preserved?"
+
+  BQ-09:
+    name: Retention & Disposal
+    question: Are audit logs retained long enough and disposed of properly?
+    tqs:
+      TQ-09.1:
+        name: Retention Policies
+        dqs:
+          - "What is the audit log retention period? Does it meet the applicable standard? (SOC 2: 1yr+, HIPAA: 6yr, PCI: 1yr, GDPR: as long as necessary)"
+          - "Is the retention period enforced automatically? (TTL, lifecycle policy, cron job)"
+          - "Are different event types retained for different durations? (security events longer than operational)"
+          - "Is the retention policy documented and approved by a responsible party?"
+          - "What happens when the retention period expires? Are logs deleted, archived, or anonymized?"
+      TQ-09.2:
+        name: Right to Delete & Erasure
+        dqs:
+          - "Can a data subject request deletion of their data? How are audit logs affected?"
+          - "Are audit logs anonymized rather than deleted when a user exercises right-to-erasure?"
+          - "Is there a documented process for handling DSAR (Data Subject Access Request) against audit logs?"
+          - "Can you demonstrate compliance with deletion requests without destroying audit integrity?"
+      TQ-09.3:
+        name: Archival & Destruction
+        dqs:
+          - "Are older audit logs moved to cold storage? Is the archive searchable when needed?"
+          - "Is the destruction of audit logs logged? (meta-audit: who deleted the logs and when)"
+          - "Are physical media disposal procedures documented for hardware that held audit data?"
+          - "Is there a certificate of destruction for audit data that has been purged?"
+
+  BQ-10:
+    name: Audit Readiness & Evidence
+    question: Can the organization produce audit evidence on demand?
+    tqs:
+      TQ-10.1:
+        name: Documentation
+        dqs:
+          - "Is there a documented audit logging policy? When was it last reviewed?"
+          - "Is there a data flow diagram showing where audit events originate, transit, and are stored?"
+          - "Are audit log schemas, retention policies, and access controls documented in a single location?"
+          - "Is there a responsible party (role, not person) for audit compliance?"
+          - "Are audit-related procedures version-controlled and change-tracked?"
+      TQ-10.2:
+        name: Evidence Collection
+        dqs:
+          - "Can you generate a complete audit report for a specific time range on demand?"
+          - "Can you produce evidence of: who accessed what data, when, and whether they were authorized?"
+          - "Is there a standard evidence package for auditor requests? What does it include?"
+          - "How long does it take to assemble evidence for a typical auditor request? (hours, days, weeks)"
+          - "Are evidence artifacts (screenshots, exports, queries) stored with metadata about how they were produced?"
+      TQ-10.3:
+        name: Continuous Compliance
+        dqs:
+          - "Are audit controls monitored continuously or only checked at audit time?"
+          - "Is there a dashboard or report showing current audit posture? (coverage %, gaps, alerts)"
+          - "Are audit control failures treated as incidents? (SLA, escalation, remediation)"
+          - "Is there a regular internal audit or self-assessment schedule? What does it cover?"
+          - "Does the CI/CD pipeline enforce audit requirements? (e.g., block deploy if audit middleware missing)"
+      TQ-10.4:
+        name: Framework Mapping
+        dqs:
+          - "Can you map each audit control to the specific compliance requirement it satisfies? (SOC 2 CC6.1, HIPAA 164.312(b), etc.)"
+          - "Are there gaps between what the framework requires and what the system provides? List them."
+          - "Is there a compliance matrix or crosswalk document? When was it last updated?"
+          - "For multi-framework compliance — are shared controls identified to avoid duplicate work?"
+          - "Has the mapping been validated by a qualified auditor or compliance professional?"

@@ -1,0 +1,255 @@
+# FORGE Discipline: Documentation
+# Structured assessment of project documentation quality and completeness.
+# Covers universal docs (README, architecture, API, ops) and compliance-specific requirements.
+
+name: Documentation
+id: documentation
+version: "1.0.0"
+description: >
+  Evaluates documentation quality, completeness, and compliance readiness.
+  Covers project identity, architecture docs, API references, operational runbooks,
+  user/developer guides, code-level docs, compliance requirements, and documentation health.
+  Use triage presets to focus on specific standards (ISO 27001, SOC 2, HIPAA, PCI DSS, GDPR).
+
+triage_presets:
+  quick:            [BQ-01, BQ-06]
+  api-first:        [BQ-01, BQ-03, BQ-06]
+  open-source:      [BQ-01, BQ-02, BQ-05, BQ-06, BQ-08]
+  internal-tool:    [BQ-01, BQ-04, BQ-06]
+  enterprise:       [BQ-01, BQ-02, BQ-03, BQ-04, BQ-07, BQ-08]
+  iso-27001:        [BQ-02, BQ-04, BQ-07]
+  soc2:             [BQ-04, BQ-07, BQ-08]
+  hipaa:            [BQ-03, BQ-04, BQ-07]
+  pci-dss:          [BQ-02, BQ-03, BQ-04, BQ-07]
+  gdpr:             [BQ-03, BQ-07, BQ-08]
+
+questions:
+  BQ-01:
+    name: Project Foundation
+    question: Can someone new understand what this project is and start using it?
+    tqs:
+      TQ-01.1:
+        name: Project Identity
+        dqs:
+          - "Is there a README with a clear one-paragraph description of what the project does and who it is for?"
+          - "Does the README state the current project status? (active, maintenance, deprecated, experimental)"
+          - "Are prerequisites and system requirements listed? (language versions, OS, dependencies)"
+          - "Is there a license file? Does it match the project's actual usage constraints?"
+      TQ-01.2:
+        name: Getting Started
+        dqs:
+          - "Are there step-by-step installation instructions that work from a clean environment?"
+          - "Is there a quickstart example that demonstrates core functionality in under 5 minutes?"
+          - "Are common first-run errors documented with solutions? (missing deps, port conflicts, permissions)"
+          - "Is there a 'Hello World' or minimal working example?"
+      TQ-01.3:
+        name: Project Context
+        dqs:
+          - "Is the problem this project solves clearly stated? (not just what it does, but why it exists)"
+          - "Are alternatives acknowledged? Why choose this over them?"
+          - "Is the project's scope defined? What it will NOT do?"
+
+  BQ-02:
+    name: Architecture Documentation
+    question: Can someone understand how the system is built and why decisions were made?
+    tqs:
+      TQ-02.1:
+        name: System Overview
+        dqs:
+          - "Is there a high-level architecture diagram showing major components and their relationships?"
+          - "Are the key technologies, frameworks, and infrastructure choices documented?"
+          - "Is the data flow documented? How does information move through the system?"
+          - "Are external dependencies and integrations documented with their purpose?"
+      TQ-02.2:
+        name: Component Design
+        dqs:
+          - "Is each major component/service/module documented with its responsibility?"
+          - "Are component boundaries and interfaces defined? (what talks to what, and how)"
+          - "Are shared resources documented? (databases, queues, caches, file systems)"
+          - "Is the directory/project structure explained? Where does new code go?"
+      TQ-02.3:
+        name: Decision Records
+        dqs:
+          - "Are significant architectural decisions recorded? (ADRs, design docs, or equivalent)"
+          - "Does each decision record include context, options considered, and rationale?"
+          - "Are trade-offs acknowledged? What was sacrificed for the chosen approach?"
+          - "Are superseded decisions marked as such with pointers to the replacement?"
+      TQ-02.4:
+        name: Security Architecture
+        dqs:
+          - "Is the trust boundary model documented? (what is trusted vs untrusted)"
+          - "Is the authentication and authorization architecture documented?"
+          - "Are encryption decisions documented? (at rest, in transit, key management)"
+          - "Is the network architecture documented? (firewalls, VPNs, segmentation)"
+
+  BQ-03:
+    name: API & Interface Documentation
+    question: Can a developer integrate with or extend this system using only the docs?
+    tqs:
+      TQ-03.1:
+        name: API Reference
+        dqs:
+          - "Is every public API endpoint documented with method, path, parameters, and response?"
+          - "Are request/response examples provided for each endpoint? (not just schema, actual examples)"
+          - "Are error responses documented? (status codes, error body format, common error scenarios)"
+          - "Is authentication documented? (how to get credentials, how to pass them, token lifecycle)"
+          - "Are rate limits, pagination, and filtering documented?"
+      TQ-03.2:
+        name: Data Models
+        dqs:
+          - "Are data models/schemas documented with field descriptions, types, and constraints?"
+          - "Are relationships between models documented? (foreign keys, references, hierarchies)"
+          - "Are enum values and their meanings documented?"
+          - "Is the data validation documented? (required fields, format constraints, value ranges)"
+      TQ-03.3:
+        name: Integration Guides
+        dqs:
+          - "Are there integration guides for common use cases? (not just reference, but workflows)"
+          - "Are webhook/callback contracts documented? (payload format, retry behavior, ordering)"
+          - "Are SDK/client library docs available? (if applicable)"
+          - "Is API versioning strategy documented? (how breaking changes are handled)"
+
+  BQ-04:
+    name: Operational Documentation
+    question: Can an operator deploy, monitor, and troubleshoot this system without tribal knowledge?
+    tqs:
+      TQ-04.1:
+        name: Deployment & Configuration
+        dqs:
+          - "Is the deployment process documented step-by-step? (from code to running in production)"
+          - "Are all configuration options documented with defaults, valid values, and effects?"
+          - "Are environment-specific configurations documented? (dev, staging, production)"
+          - "Is the rollback procedure documented? How to undo a bad deployment?"
+          - "Are infrastructure requirements documented? (CPU, memory, disk, network)"
+      TQ-04.2:
+        name: Monitoring & Alerting
+        dqs:
+          - "Are key metrics documented? (what to monitor, what values are normal, what triggers alerts)"
+          - "Are log formats documented? (where logs go, how to search them, what log levels mean)"
+          - "Are health check endpoints documented? (URL, expected response, failure modes)"
+          - "Is the alerting chain documented? (who gets paged, escalation path, response SLAs)"
+      TQ-04.3:
+        name: Incident Response
+        dqs:
+          - "Are runbooks available for known failure modes? (step-by-step recovery procedures)"
+          - "Is the incident classification documented? (severity levels, response expectations)"
+          - "Are common troubleshooting steps documented? (how to diagnose issues)"
+          - "Is the post-incident review process documented?"
+      TQ-04.4:
+        name: Backup & Recovery
+        dqs:
+          - "Is the backup strategy documented? (what, how often, where, retention)"
+          - "Is the disaster recovery procedure documented? (RPO, RTO, step-by-step restore)"
+          - "Are backup verification procedures documented? (how to test that backups work)"
+          - "Is the business continuity plan documented? (what happens during extended outage)"
+
+  BQ-05:
+    name: User & Developer Guides
+    question: Can users accomplish their goals and developers contribute effectively?
+    tqs:
+      TQ-05.1:
+        name: User Documentation
+        dqs:
+          - "Are user guides organized by task? (how to do X, not just what X is)"
+          - "Are tutorials provided for common workflows? (step-by-step with expected outcomes)"
+          - "Are screenshots, diagrams, or videos included where they aid understanding?"
+          - "Is there a FAQ or troubleshooting section for common user issues?"
+      TQ-05.2:
+        name: Developer Guides
+        dqs:
+          - "Is the local development setup documented? (clone, install, run, test)"
+          - "Are coding conventions documented? (style, patterns, naming, file organization)"
+          - "Is the testing strategy documented? (how to run tests, what to test, where tests go)"
+          - "Is the debugging guide documented? (how to attach debugger, enable verbose logging, inspect state)"
+      TQ-05.3:
+        name: Contributing
+        dqs:
+          - "Is there a CONTRIBUTING guide? (how to submit changes, review process, expectations)"
+          - "Are issue/PR templates provided with clear guidance?"
+          - "Is the branching strategy documented? (branch naming, merge process, release flow)"
+          - "Is the code review process documented? (who reviews, what reviewers look for, turnaround expectations)"
+
+  BQ-06:
+    name: Code-Level Documentation
+    question: Can a developer understand the code without asking the author?
+    tqs:
+      TQ-06.1:
+        name: Inline Documentation
+        dqs:
+          - "Do public functions have docstrings explaining purpose, parameters, return values, and exceptions?"
+          - "Are complex algorithms explained with comments? (not what the code does, but WHY)"
+          - "Are workarounds and hacks marked with context? (why the hack exists, when it can be removed)"
+          - "Are magic numbers and non-obvious constants named and explained?"
+      TQ-06.2:
+        name: Type Safety & Contracts
+        dqs:
+          - "Are type annotations used for public function signatures?"
+          - "Are preconditions and postconditions documented? (what must be true before/after calling)"
+          - "Are invariants documented? (what must always be true about this data structure)"
+          - "Are thread-safety guarantees documented? (safe to call from multiple threads? needs lock?)"
+      TQ-06.3:
+        name: Examples & Tests as Docs
+        dqs:
+          - "Do tests serve as usage examples? (can you learn how to use the API by reading tests?)"
+          - "Are edge cases documented in test names? (test_handles_empty_input, test_rejects_negative)"
+          - "Are integration test scenarios documented? (what real-world workflows they simulate)"
+          - "Is there a examples/ directory or cookbook for common patterns?"
+
+  BQ-07:
+    name: Compliance & Standards
+    question: Does the documentation meet regulatory and industry requirements?
+    tqs:
+      TQ-07.1:
+        name: Regulatory Documentation
+        dqs:
+          - "Are applicable regulations identified? (GDPR, HIPAA, PCI DSS, SOX, FedRAMP, etc.)"
+          - "Is there a compliance matrix mapping requirements to controls?"
+          - "Are data classification levels defined and documented? (public, internal, confidential, restricted)"
+          - "Are data retention and deletion policies documented?"
+      TQ-07.2:
+        name: Privacy Documentation
+        dqs:
+          - "Is there a privacy policy describing what data is collected and why?"
+          - "Are data processing activities documented? (GDPR Article 30 records)"
+          - "Is the data subject rights process documented? (access, deletion, portability requests)"
+          - "Are data protection impact assessments documented? (for high-risk processing)"
+      TQ-07.3:
+        name: Security Controls Documentation
+        dqs:
+          - "Is there a security policy document? (access control, password requirements, MFA)"
+          - "Are security controls mapped to frameworks? (NIST CSF, CIS Controls, ISO 27001 Annex A)"
+          - "Is the vulnerability management process documented? (scanning, patching, disclosure)"
+          - "Is the security incident response plan documented? (detection, containment, eradication, recovery)"
+      TQ-07.4:
+        name: Audit & Evidence
+        dqs:
+          - "Are audit logs documented? (what events are logged, format, retention, access)"
+          - "Is the change management process documented? (approval workflow, change records)"
+          - "Are access reviews documented? (who has access, when reviewed, by whom)"
+          - "Is evidence of control effectiveness maintained? (test results, review records, metrics)"
+
+  BQ-08:
+    name: Documentation Health
+    question: Is the documentation maintained, discoverable, and trustworthy?
+    tqs:
+      TQ-08.1:
+        name: Currency & Maintenance
+        dqs:
+          - "When was each documentation section last updated? Is any section stale?"
+          - "Is there an owner for each documentation area? (who updates it when things change)"
+          - "Are docs updated as part of the PR/change process? (docs-as-code, or at least a checklist)"
+          - "Is there a documentation review cadence? (quarterly review, annual audit, etc.)"
+      TQ-08.2:
+        name: Coverage & Gaps
+        dqs:
+          - "Is there a documentation inventory? (what docs exist, where they live)"
+          - "Are known documentation gaps tracked? (backlog items, TODO markers)"
+          - "Is documentation coverage proportional to complexity? (complex areas get more docs)"
+          - "Are deprecated features documented as deprecated with migration paths?"
+      TQ-08.3:
+        name: Discoverability & Access
+        dqs:
+          - "Is documentation searchable? (search function, consistent naming, good titles)"
+          - "Is documentation organized logically? (by audience, by task, by component)"
+          - "Is documentation accessible to all stakeholders? (permissions, formats, languages)"
+          - "Is there a single entry point? (docs home page, table of contents, documentation map)"

@@ -1,0 +1,155 @@
+# FORGE Gate Definitions
+# Maps intake profile answers to DQ/TQ paths that should be auto-N/A'd.
+#
+# Target format:
+#   discipline:BQ-XX           — gate entire BQ (all TQs and DQs)
+#   discipline:BQ-XX.TQ-XX.Y   — gate entire TQ (all DQs in that topic)
+#   discipline:BQ-XX.TQ-XX.Y[n] — gate specific DQ by index
+#
+# Condition syntax:
+#   field == value
+#   field != value
+#   field in [value1, value2]
+#   Combine with: and, or (left-to-right evaluation)
+
+version: "1.0.0"
+
+gates:
+
+  no_ai_ml:
+    condition: "has_ai_ml == false"
+    reason: "No AI/ML components in this project"
+    targets:
+      - security:BQ-13
+
+  no_auth:
+    condition: "has_auth == false"
+    reason: "No user authentication in this project"
+    targets:
+      - security:BQ-04.TQ-04.1
+      - security:BQ-04.TQ-04.2
+      - security:BQ-04.TQ-04.4
+      - test-specification:BQ-06.TQ-06.1
+      - test-specification:BQ-06.TQ-06.2
+
+  no_compliance:
+    condition: "data_sensitivity in [none, internal]"
+    reason: "No regulated data — compliance questions not applicable"
+    targets:
+      - security:BQ-10.TQ-10.4
+
+  single_user:
+    condition: "users == single-user and environment == personal-homelab"
+    reason: "Single-user homelab — no SLA, scaling, or multi-tenancy concerns"
+    targets:
+      - security:BQ-11.TQ-11.2
+      - security:BQ-11.TQ-11.3
+      - architecture-review:BQ-04
+
+  no_database:
+    condition: "has_database == false"
+    reason: "No database or persistent data store"
+    targets:
+      - security:BQ-03.TQ-03.3
+      - code-review:BQ-03.TQ-03.3
+
+  simple_architecture:
+    condition: "architecture in [script, monolith]"
+    reason: "Simple architecture — no distributed system concerns"
+    targets:
+      - security:BQ-04.TQ-04.3
+      - security:BQ-06.TQ-06.4
+      - architecture-review:BQ-07
+
+  no_external_apis:
+    condition: "has_external_apis == false"
+    reason: "No external API dependencies"
+    targets:
+      - test-specification:BQ-07.TQ-07.3
+      - documentation:BQ-03
+
+  no_auth_docs:
+    condition: "has_auth == false"
+    reason: "No user authentication — auth docs not applicable"
+    targets:
+      - documentation:BQ-02.TQ-02.4
+
+  no_compliance_docs:
+    condition: "data_sensitivity in [none, internal]"
+    reason: "No regulated data — compliance documentation not applicable"
+    targets:
+      - documentation:BQ-07
+
+  # Audit discipline gates
+  no_compliance_audit:
+    condition: "data_sensitivity in [none, internal]"
+    reason: "No regulated data — deep compliance questions not applicable"
+    targets:
+      - audit:BQ-04              # Data Classification & Privacy
+      - audit:BQ-09              # Retention & Disposal
+      - audit:BQ-10.TQ-10.4      # Framework Mapping
+
+  no_ai_audit:
+    condition: "has_ai_ml == false"
+    reason: "No AI/ML components — AI accountability not applicable"
+    targets:
+      - audit:BQ-08.TQ-08.2      # AI Input/Output Capture
+      - audit:BQ-08.TQ-08.3      # Automated Action Audit
+
+  single_user_audit:
+    condition: "users == single-user and environment == personal-homelab"
+    reason: "Single-user homelab — multi-user audit controls not applicable"
+    targets:
+      - audit:BQ-03.TQ-03.3      # Service-to-Service Identity
+      - audit:BQ-03.TQ-03.4      # Non-Repudiation
+      - audit:BQ-05.TQ-05.2      # Admin Action Logging
+      - audit:BQ-05.TQ-05.4      # API Key & Token Lifecycle
+      - audit:BQ-07.TQ-07.1      # Anomaly Detection
+      - audit:BQ-10              # Audit Readiness & Evidence
+
+  no_auth_audit:
+    condition: "has_auth == false"
+    reason: "No authentication — auth audit questions not applicable"
+    targets:
+      - audit:BQ-03.TQ-03.1      # User Identity
+      - audit:BQ-05              # Access Control Audit
+
+  simple_audit:
+    condition: "architecture in [script, monolith]"
+    reason: "Simple architecture — distributed tracing and cross-service audit not applicable"
+    targets:
+      - audit:BQ-03.TQ-03.2[2]   # Distributed tracing DQ
+      - audit:BQ-03.TQ-03.3      # Service-to-Service Identity
+
+  single_user_docs:
+    condition: "users == single-user and environment == personal-homelab"
+    reason: "Single-user homelab — user guides and contributing docs not applicable"
+    targets:
+      - documentation:BQ-05.TQ-05.1
+      - documentation:BQ-05.TQ-05.3
+      - documentation:BQ-04.TQ-04.4
+
+  # Operations Review discipline gates
+  simple_ops:
+    condition: "architecture == script"
+    reason: "Script — no containers, pipelines, or services to review"
+    targets:
+      - operations-review:BQ-04.TQ-04.1   # Container/Image Hygiene
+      - operations-review:BQ-05            # Service Configuration
+      - operations-review:BQ-06            # Pipeline & Throughput
+
+  no_external_ops:
+    condition: "has_external_apis == false"
+    reason: "No external dependencies — provider health and cost tracking not applicable"
+    targets:
+      - operations-review:BQ-09.TQ-09.1   # Provider Status
+      - operations-review:BQ-09.TQ-09.3   # Vendor Lock-in
+      - operations-review:BQ-08.TQ-08.1   # API & Service Costs
+      - operations-review:BQ-08.TQ-08.3   # License & Subscription
+
+  single_user_ops:
+    condition: "users == single-user and environment == personal-homelab"
+    reason: "Single-user homelab — SLA, escalation, and license concerns not applicable"
+    targets:
+      - operations-review:BQ-02.TQ-02.3[4]  # Escalation path
+      - operations-review:BQ-08.TQ-08.3     # License & Subscription

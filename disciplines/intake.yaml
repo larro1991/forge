@@ -1,0 +1,84 @@
+# FORGE Intake Profile Questions
+# Establishes project context to gate irrelevant assessment questions.
+# Run: forge intake <project>
+
+version: "1.0.0"
+
+questions:
+  environment:
+    prompt: "What is the deployment environment?"
+    type: choice
+    options:
+      - personal-homelab
+      - internal-team
+      - production-saas
+      - enterprise-on-prem
+    default: null
+
+  users:
+    prompt: "Who are the users?"
+    type: choice
+    options:
+      - single-user
+      - small-team
+      - organization
+      - public
+    default: null
+
+  data_sensitivity:
+    prompt: "What is the highest data sensitivity level?"
+    type: choice
+    options:
+      - none
+      - internal
+      - pii
+      - regulated
+    default: null
+
+  architecture:
+    prompt: "What is the architecture type?"
+    type: choice
+    options:
+      - script
+      - monolith
+      - multi-service
+      - distributed
+    default: null
+
+  has_auth:
+    prompt: "Does the system have user authentication?"
+    type: bool
+    default: null
+
+  has_ai_ml:
+    prompt: "Does the system use AI/ML models, LLM APIs, or agents?"
+    type: bool
+    default: null
+
+  has_database:
+    prompt: "Does the system use a database or persistent data store?"
+    type: bool
+    default: null
+
+  has_external_apis:
+    prompt: "Does the system call external APIs or third-party services?"
+    type: bool
+    default: null
+
+  has_multi_tenant:
+    prompt: "Is the system multi-tenant? (multiple organizations share the same deployment)"
+    type: bool
+    default: null
+
+  compliance_target:
+    prompt: "What is the target compliance level?"
+    type: choice
+    options:
+      - none
+      - basic-logging
+      - soc2
+      - hipaa
+      - pci-dss
+      - gdpr
+      - enterprise-multi
+    default: null
