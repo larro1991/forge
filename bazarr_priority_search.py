@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """Queue priority subtitle searches in Bazarr: anime first, then movies."""
+import os
+import sys
 import urllib.request
 import sqlite3
 import json
 import time
 
-API_KEY = "d78b5c17cab81553d792838d64ff7235"
+API_KEY = os.environ.get("BAZARR_API_KEY")
+if not API_KEY:
+    sys.exit(
+        "ERROR: BAZARR_API_KEY environment variable is not set.\n"
+        "Set it to your Bazarr API key, e.g.:\n"
+        "  export BAZARR_API_KEY=your-api-key-here"
+    )
 BASE = "http://127.0.0.1:6767/api"
 
 def api_patch(endpoint, data):
