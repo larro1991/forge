@@ -47,9 +47,9 @@ class TestDisciplineLoader(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             load_discipline("nonexistent-xyz")
 
-    def test_security_has_269_dqs(self):
+    def test_security_has_301_dqs(self):
         disc = load_discipline("security")
-        self.assertEqual(count_discipline_dqs(disc), 269)
+        self.assertEqual(count_discipline_dqs(disc), 301)
 
     def test_troubleshooting_has_8_bqs(self):
         disc = load_discipline("troubleshooting")
@@ -111,7 +111,7 @@ class TestBackwardCompat(unittest.TestCase):
         self.assertIn("IMPROVE", VALID_STATES)
 
     def test_count_framework_dqs(self):
-        self.assertEqual(count_framework_dqs(), 269)
+        self.assertEqual(count_framework_dqs(), 301)
 
     def test_framework_sync_with_markdown(self):
         result = validate_framework_sync()
@@ -135,7 +135,7 @@ class TestForgeEngineSecurityDefault(unittest.TestCase):
         self.assertEqual(engine.get_bqs(), ["BQ-04", "BQ-05", "BQ-10", "BQ-13"])
 
     def test_total_dqs(self):
-        self.assertEqual(self.engine.total_dqs(), 269)
+        self.assertEqual(self.engine.total_dqs(), 301)
 
     def test_answer_valid_states(self):
         for state in BASE_VALID_STATES:
@@ -216,7 +216,7 @@ class TestForgeEngineSecurityDefault(unittest.TestCase):
     def test_discipline_info(self):
         info = self.engine.get_discipline_info()
         self.assertEqual(info["id"], "security")
-        self.assertEqual(info["total_dqs"], 269)
+        self.assertEqual(info["total_dqs"], 301)
         self.assertIn("full", info["triage_presets"])
 
 

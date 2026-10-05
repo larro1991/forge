@@ -163,6 +163,8 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Are there any dependencies that are abandoned, archived, or single-maintainer?
 - DQ: Could any dependency be removed entirely? (used for one function that could be inlined)
 - DQ: Are there build/runtime files (docker-compose, .env, Makefile) that contain secrets? Are they gitignored? *(KB-003: video-pipeline 2026-03-21)*
+- DQ: Is there a dependency confusion risk? Could an attacker publish a public package with the same name as an internal/private package and have it resolved first?
+- DQ: Were any dependency names sourced from AI-generated code suggestions? AI models hallucinate package names — are all packages verified against the actual registry before install?
 
 ### TQ-02.4: Build System
 - DQ: What is the build process? Is it documented? Is it reproducible?
@@ -198,6 +200,8 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: What are the backup procedures? How often? Tested restore?
 - DQ: Is there data in multiple stores that must stay in sync? How is consistency maintained?
 - DQ: What happens if storage is full? Read-only filesystem? Slow disk?
+- DQ: Are soft-deleted records excluded from all queries by default? Can a user access another user's (or another tenant's) soft-deleted data via direct ID lookup?
+- DQ: Are soft-delete timestamps, actor IDs, and reasons recorded for audit purposes?
 
 ### TQ-03.4: Data Outputs
 - DQ: What are ALL the output destinations? (UI, APIs, files, logs, emails, webhooks)
@@ -205,6 +209,13 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Are outputs properly encoded for their destination? (HTML-escaped for web, parameterized for SQL)
 - DQ: Can output volume overwhelm a downstream consumer?
 - DQ: Are outputs validated before sending? (well-formed JSON, valid email, etc.)
+
+### TQ-03.5: Idempotency & Event Processing
+- DQ: Are payment/financial webhook events processed idempotently? If the same event fires twice (Stripe/provider retry), does it charge twice or update incorrectly?
+- DQ: Is there a unique idempotency key stored and checked before processing each payment event?
+- DQ: Are webhook handlers protected against replay attacks? (signature verification + event ID deduplication)
+- DQ: Are background job enqueue operations idempotent? Can the same job be enqueued and run multiple times safely?
+- DQ: Is message processing at-least-once or exactly-once? What happens on duplicate delivery?
 
 ---
 
@@ -245,6 +256,15 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Is there an API gateway or is each service handling its own auth?
 - DQ: Are deprecated API versions still accessible? Are they still secure?
 
+### TQ-04.5: Multi-Tenant Isolation
+- DQ: Does every database query that returns tenant-owned data filter by tenant_id? Are there any queries that could return another tenant's rows?
+- DQ: Can a user from tenant A access or modify resources owned by tenant B via ID manipulation (IDOR)? Test by substituting IDs across tenant boundaries.
+- DQ: Before writing a cross-table relationship (e.g. grant role, assign agent, add device), is the target entity verified to belong to the requesting tenant?
+- DQ: Are shared infrastructure resources (Redis queues, job queues, caches, notification channels) namespaced per tenant? Could a tenant read another tenant's queued data?
+- DQ: Does the RBAC system prevent granting roles to users outside the actor's own tenant?
+- DQ: Are soft-delete and archive operations scoped so that a tenant cannot read another tenant's deleted records?
+- DQ: Are bulk/admin endpoints (merge, export, report) explicitly scoped so platform_admin is required for cross-tenant operations?
+
 ---
 
 ## BQ-05: INPUT VALIDATION & INJECTION DEFENSE
@@ -259,6 +279,8 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Does it deserialize user-supplied data? (pickle, YAML, XML — all dangerous)
 - DQ: Does it process user-supplied XML? Is XXE disabled?
 - DQ: Does it use user input in LDAP queries, regex, HTTP headers, or redirects?
+- DQ: Does the software make outbound HTTP requests with user-supplied URLs or hostnames (SSRF)? Are RFC1918, loopback (127.x), link-local (169.254.x), and metadata endpoints (169.254.169.254) blocked? Is DNS rebinding mitigated?
+- DQ: Can user input reach an LLM prompt without sanitization or delimiter hardening? (Prompt injection — see BQ-13)
 
 ### TQ-05.2: Validation Strategy
 - DQ: Is validation allowlist-based (accept known good) or denylist-based (reject known bad)?
@@ -274,6 +296,13 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Are security headers present? (CSP, X-Frame-Options, X-Content-Type-Options, HSTS)
 - DQ: Is there protection against open redirects?
 - DQ: Are error messages sanitized? (no stack traces, internal paths, or query text leaked to users)
+
+### TQ-05.4: Mass Assignment, Runtime Validation & CORS
+- DQ: Can a user submit extra fields (mass assignment) that are silently accepted and stored? Are request schemas explicit allowlists, not catch-all models?
+- DQ: Are Pydantic/serializer schemas explicitly declaring accepted fields rather than inheriting ORM models that expose all columns?
+- DQ: Is there runtime schema validation at the API boundary? TypeScript/type annotations are erased at runtime — is a runtime validator (Zod, Valibot, Pydantic) enforcing the contract?
+- DQ: Is CORS misconfigured? Specifically: wildcard origin + credentials, localhost origins in production with credentials enabled, or overly broad origin patterns?
+- DQ: Are CORS origins validated server-side against an allowlist? Can a tenant config field inject a new allowed origin?
 
 ---
 
@@ -309,6 +338,12 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Are there fallback paths for critical operations?
 - DQ: Does the system communicate its degraded state to users/operators?
 - DQ: Are there timeouts on all external calls? Are they reasonable?
+
+### TQ-06.5: Transaction Integrity
+- DQ: Are audit log writes in a separate committed transaction from the business operation? If the business transaction rolls back, are the audit entries still preserved?
+- DQ: Are there operations that span multiple tables or services without a wrapping transaction? What leaves inconsistent state on partial failure?
+- DQ: Are distributed multi-step operations (saga pattern) tracked so that compensating actions can run on failure?
+- DQ: Are DB session/connection boundaries explicit? Could an audit write share a session with the operation it is auditing and roll back together?
 
 ---
 
@@ -395,6 +430,10 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Can configuration be changed without redeploying?
 - DQ: Is there configuration drift between environments?
 - DQ: Are configuration changes audited?
+- DQ: Are database schema migrations committed alongside the application code that requires them? Could deploying the app without running migrations cause startup failures or data corruption?
+- DQ: Are migrations reversible? Is there a tested rollback path for each recent migration?
+- DQ: Are feature flags/kill switches used to decouple deploy from release? Where are they stored and who can toggle them?
+- DQ: Can a feature flag be toggled without redeployment? Is there an audit trail of flag changes?
 
 ### TQ-09.3: Infrastructure
 - DQ: Is infrastructure defined as code? (Terraform, CloudFormation, Docker Compose)
@@ -479,6 +518,7 @@ Output goes in `RESULTS-<project-name>.md` using the standard template (see `RES
 - DQ: Are there resource leaks? (connections, file handles, memory)
 - DQ: Are there unbounded queues, caches, or buffers that could exhaust memory?
 - DQ: Are there timeouts on all blocking operations?
+- DQ: Is there protection against cache stampede (thundering herd)? When a popular cache entry expires, can many concurrent requests simultaneously hit the backing store? Is there a mutex/lock, probabilistic early expiry, or background refresh pattern?
 
 ---
 
