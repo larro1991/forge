@@ -304,7 +304,7 @@ engine.answer("BQ-09", "TQ-09.2", 0, "GAP",
 engine.add_gap("BQ-09", "TQ-09.2",
     "VAULT_SESSION token expires in ~1 year from creation (2026-04) with no expiry monitoring. All vault writes (daily logs, seed ingestion) will silently fail after expiry.",
     severity="high",
-    fix="Add a weekly cron check: SELECT expires_at FROM auth_sessions WHERE session_token='seed-service-...'. Alert via Discord if expiry is <30 days away. Alternatively set expiry to 10 years.")
+    fix="Add a weekly cron check: SELECT expires_at FROM auth_sessions WHERE session_token='<redacted-2026-10-18>'. Alert via Discord if expiry is <30 days away. Alternatively set expiry to 10 years.")
 
 engine.answer("BQ-09", "TQ-09.2", 1, "GAP",
     "Credentials are hardcoded in script source files: EMBER_TOKEN in seed_ember_vault.py and sync_ember_vault.py, VAULT_SESSION in seed_ember_vault.py, sync_ember_vault.py, ops-monitor, and TrueNAS scripts. Discord webhook URL is hardcoded in chief_of_staff_morning.py, chief_of_staff_evening.py, and ops-monitor.",
